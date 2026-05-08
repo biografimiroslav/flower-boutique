@@ -1,11 +1,28 @@
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCartModal, setContactModal, setMobileMenu } from '../store/cartSlice';
+import { setAuthModal, setAuthView } from '../store/authSlice'; // ДОДАЛИ ІМПОРТИ ДЛЯ МОДАЛКИ ВХОДУ
 
 export default function Header() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  
   const cartItems = useSelector(state => state.cart.items);
   const totalItems = cartItems.reduce((sum, item) => sum + item.qty, 0);
+  
+  // ПРАВИЛЬНО: Витягуємо юзера на рівні компонента, а не всередині onClick
+  const user = useSelector(state => state.auth.user);
+
+  // Окрема функція для обробки кліку по іконці юзера
+  const handleUserClick = (e) => {
+    e.preventDefault();
+    if (user) {
+      navigate('/profile'); // Якщо залогінений -> в кабінет
+    } else {
+      dispatch(setAuthView('login')); // Якщо гість -> показуємо форму входу
+      dispatch(setAuthModal(true)); // Відкриваємо модалку
+    }
+  };
 
   return (
     <header className="header">
@@ -29,18 +46,13 @@ export default function Header() {
         </ul>
         <ul className="nav2">
           <a href="#"><img className="iconPhone" src="/img/search.svg" alt="Search" /></a>
-<a href="#" onClick={(e) => { 
-            e.preventDefault(); 
-            if (useSelector(state => state.auth.user)) {
-               window.location.href = '/profile';
-            } else {
-               dispatch(setAuthView('login'));
-               dispatch(setAuthModal(true)); 
-            }
-          }}>
+          
+          {/* ТУТ МИ ВИКЛИКАЄМО НАШУ НОВУ ФУНКЦІЮ */}
+          <a href="#" onClick={handleUserClick}>
             <img className="iconPhone" src="/img/login.svg" alt="Login" />
-                  </a>
-                  <a href="#"><img className="iconPhone" src="/img/like.svg" alt="Like" /></a>
+          </a>
+          
+          <a href="#"><img className="iconPhone" src="/img/like.svg" alt="Like" /></a>
           <a href="#" style={{ position: 'relative', display: 'inline-block' }} onClick={(e) => { e.preventDefault(); dispatch(setCartModal(true)); }}>
             <img className="iconPhone" src="/img/basket.svg" alt="Basket" />
             <span style={{ position: 'absolute', top: '-5px', right: '-8px', background: '#c86b8e', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold', display: totalItems > 0 ? 'inline-block' : 'none' }}>{totalItems}</span>
