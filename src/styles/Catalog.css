@@ -1,0 +1,235 @@
+/* =========================================
+   КАТАЛОГ: КАТЕГОРІЇ (ДЕСКТОП)
+   ========================================= */
+.catalog {
+  padding-top: 20px;
+}
+.catalogTex {
+  color: #4a4a4a;
+  font-size: 32px;
+  font-weight: 400;
+  text-align: center;
+  margin-bottom: 40px;
+  letter-spacing: 1px;
+}
+.catalogCatrgory {
+  background: rgba(249, 245, 247, 0.6);
+  padding: 40px 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-top: 1px solid rgba(200, 107, 142, 0.1);
+  border-bottom: 1px solid rgba(200, 107, 142, 0.1);
+}
+.catalogCategories {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px 40px;
+  list-style: none;
+  margin-bottom: 30px;
+}
+.catalogCategories li {
+  color: #4A4A4A;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  padding-bottom: 5px;
+  transition: color 0.3s;
+}
+.catalogCategories li:hover { color: #c86b8e; }
+.selectionByPriceForm {
+  display: flex;
+  max-width: 600px;
+  width: 100%;
+}
+.selectionByPriceInput {
+  flex-grow: 1;
+  border: 2px solid #c86b8e;
+  border-right: none;
+  padding: 15px 25px;
+  color: #c86b8e;
+  font-size: 16px;
+  font-weight: 600;
+  outline: none;
+}
+.selectionByPriceEnter {
+  background: #ffffff;
+  color: #c86b8e;
+  border: 2px solid #c86b8e;
+  padding: 0 40px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+.selectionByPriceEnter:hover {
+  background: #c86b8e;
+  color: #ffffff;
+}
+
+/* =========================================
+   КАТАЛОГ: КАТЕГОРІЇ (МОБІЛЬНІ)
+   ========================================= */
+.storefront-header {
+  padding: 20px 15px 0;
+}
+.storefront-title {
+  color: #4A4A4A;
+  font-size: 26px;
+  text-align: center;
+  margin-bottom: 20px;
+  font-weight: 400;
+}
+.categories-panel {
+  background: rgba(249, 245, 247, 0.8);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+.category-toggle-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  font-weight: 700;
+  color: #4A4A4A;
+  font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.categories-dropdown {
+  display: none;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(200, 107, 142, 0.2);
+}
+.categories-dropdown.is-active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.categories-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  list-style: none;
+  margin-bottom: 20px;
+}
+.categories-list li {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4A4A4A;
+  cursor: pointer;
+}
+.categories-list li:hover { color: #c86b8e; }
+.price-filter {
+  display: flex;
+  width: 100%;
+}
+.price-filter-input {
+  flex: 1;
+  border: 1px solid #c86b8e;
+  border-right: none;
+  padding: 12px;
+  outline: none;
+  color: #c86b8e;
+  font-weight: 600;
+}
+.price-filter-btn {
+  background: #c86b8e;
+  color: white;
+  padding: 0 20px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+/* =========================================
+   ЄДИНА СІТКА ТОВАРІВ
+   ========================================= */
+.catalog-page-wrapper {
+  padding: 40px 150px;
+}
+
+#catalogGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+}
+
+#catalogGrid .imgWrapper {
+  width: 100%;
+  height: 280px; 
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #f9f5f7; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#catalogGrid .storeFrontListImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+  object-position: center; 
+  transition: transform 0.5s ease;
+}
+
+.storeFrontListItem:hover .storeFrontListImg {
+  transform: scale(1.08);
+}
+
+.moreContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 50px;
+}
+
+.downMore {
+  color: #C86B8E;
+  font-size: 16px;
+  font-weight: 700;
+  border: 2px solid #C86B8E;
+  background: transparent;
+  padding: 15px 70px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.downMore:hover {
+  background: #C86B8E;
+  color: white;
+}
+
+/* =========================================
+   АДАПТИВНІСТЬ
+   ========================================= */
+.storefront-header { display: none; }
+.catalog { display: block; }
+
+@media screen and (max-width: 1024px) {
+  .catalog { display: none; }
+  .storefront-header { display: block; }
+  .catalog-page-wrapper { padding: 30px 50px; }
+  #catalogGrid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  #catalogGrid .imgWrapper { height: 340px; }
+}
+
+@media screen and (max-width: 768px) {
+  .catalog-page-wrapper { padding: 20px 15px; }
+  #catalogGrid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+  #catalogGrid .imgWrapper { height: 280px; } 
+  .downMore { padding: 12px 40px; font-size: 14px; }
+}

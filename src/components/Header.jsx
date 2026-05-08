@@ -1,0 +1,52 @@
+import { Link, NavLink } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCartModal, setContactModal, setMobileMenu } from '../store/cartSlice';
+
+export default function Header() {
+  const dispatch = useDispatch();
+  const cartItems = useSelector(state => state.cart.items);
+  const totalItems = cartItems.reduce((sum, item) => sum + item.qty, 0);
+
+  return (
+    <header className="header">
+      <img className="phoneitems" onClick={() => dispatch(setMobileMenu(true))} src="/img/burger.svg" alt="Menu" />
+      <img className="phoneitems" src="/img/logoForPhoneHeader.svg" alt="Logo Phone" />
+      <Link className="headerLogoA" to="/">
+        <img className="headerLogo" src="/img/logo.svg" alt="Logo" />
+      </Link>
+      <nav className="navList">
+        <NavLink className={({isActive}) => isActive ? "navListItem active" : "navListItem"} to="/">Головна</NavLink>
+        <NavLink className={({isActive}) => isActive ? "navListItem active" : "navListItem"} to="/catalog">Каталог</NavLink>
+        <a className="navListItem" href="/#Poslugi">Послуги</a>
+        <a className="navListItem" href="/#About">Про нас</a>
+        <a className="navListItem" href="#" onClick={(e) => { e.preventDefault(); dispatch(setContactModal(true)); }}>Контакти</a>
+      </nav>
+      <nav className="navList2">
+        <ul className="chooseLanguage">
+          <li><a className="active" href="#">UA</a></li>
+          <li><img src="/img/lineForLanguage.svg" alt="|" /></li>
+          <li><a href="#">ENG</a></li>
+        </ul>
+        <ul className="nav2">
+          <a href="#"><img className="iconPhone" src="/img/search.svg" alt="Search" /></a>
+<a href="#" onClick={(e) => { 
+            e.preventDefault(); 
+            if (useSelector(state => state.auth.user)) {
+               window.location.href = '/profile';
+            } else {
+               dispatch(setAuthView('login'));
+               dispatch(setAuthModal(true)); 
+            }
+          }}>
+            <img className="iconPhone" src="/img/login.svg" alt="Login" />
+                  </a>
+                  <a href="#"><img className="iconPhone" src="/img/like.svg" alt="Like" /></a>
+          <a href="#" style={{ position: 'relative', display: 'inline-block' }} onClick={(e) => { e.preventDefault(); dispatch(setCartModal(true)); }}>
+            <img className="iconPhone" src="/img/basket.svg" alt="Basket" />
+            <span style={{ position: 'absolute', top: '-5px', right: '-8px', background: '#c86b8e', color: 'white', borderRadius: '50%', padding: '2px 6px', fontSize: '11px', fontWeight: 'bold', display: totalItems > 0 ? 'inline-block' : 'none' }}>{totalItems}</span>
+          </a>
+        </ul>
+      </nav>
+    </header>
+  );
+}

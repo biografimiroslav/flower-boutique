@@ -1,0 +1,118 @@
+/* Модалки Авторизації */
+.auth-modal {
+  max-width: 400px !important;
+  padding: 40px 30px !important;
+  text-align: center;
+}
+
+.auth-modal h2 {
+  color: #4a4a4a;
+  margin-bottom: 25px;
+  font-size: 24px;
+}
+
+.auth-desc {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.auth-error {
+  color: #e74c3c;
+  background: #fadbd8;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.auth-modal input {
+  width: 100%;
+  padding: 15px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.3s;
+}
+
+.auth-modal input:focus {
+  border-color: #c86b8e;
+}
+
+.auth-modal button {
+  width: 100%;
+  padding: 15px;
+  background: #c86b8e;
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.auth-modal button:hover {
+  background: #a85172;
+}
+
+.auth-links {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #888;
+}
+
+.auth-links span {
+  color: #c86b8e;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-links span:hover {
+  text-decoration: underline;
+}
+
+/* Сторінка Профілю */
+.profile-page {
+  padding: 60px 150px;
+  min-height: 60vh;
+}
+
+.profile-container h1 {
+  color: #4a4a4a;
+  margin-bottom: 30px;
+}
+
+.profile-card {
+  background: #fff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  max-width: 500px;
+}
+
+.profile-card h3 {
+  color: #c86b8e;
+  margin-bottom: 20px;
+}
+
+.profile-card p {
+  font-size: 16px;
+  color: #4a4a4a;
+  margin-bottom: 10px;
+}
+
+.logout-btn {
+  margin-top: 25px;
+  padding: 12px 25px;
+  background: #e74c3c;
+  color: white;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .profile-page { padding: 30px 15px; }
+}
