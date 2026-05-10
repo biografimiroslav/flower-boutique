@@ -6,7 +6,8 @@ const cartSlice = createSlice({
     items: JSON.parse(localStorage.getItem('flower_cart')) || [],
     isCartOpen: false,
     isContactOpen: false,
-    isMobileMenuOpen: false
+    isMobileMenuOpen: false,
+    isSearchOpen: false // ДОДАНО СТАН ПОШУКУ
   },
   reducers: {
     addToCart: (state, action) => {
@@ -26,9 +27,10 @@ const cartSlice = createSlice({
     },
     setCartModal: (state, action) => { state.isCartOpen = action.payload; },
     setContactModal: (state, action) => { state.isContactOpen = action.payload; },
-    setMobileMenu: (state, action) => { state.isMobileMenuOpen = action.payload; }
+    setMobileMenu: (state, action) => { state.isMobileMenuOpen = action.payload; },
+    setSearchModal: (state, action) => { state.isSearchOpen = action.payload; } // ДОДАНО
   }
 });
 
-export const { addToCart, removeFromCart, clearCart, setCartModal, setContactModal, setMobileMenu } = cartSlice.actions;
+export const { addToCart, removeFromCart, clearCart, setCartModal, setContactModal, setMobileMenu, setSearchModal } = cartSlice.actions;
 export default cartSlice.reducer;

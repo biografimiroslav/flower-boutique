@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Modals from './components/Modals';
+import SearchModal from './components/SearchModal'; // ДОДАНО
 import Home from './pages/Home';
 import Catalog from './pages/Catalog';
 import Product from './pages/Product';
@@ -25,6 +26,7 @@ export default function App() {
       <Footer />
       <Modals />
       <AuthModals />
+      <SearchModal /> {/* ВІКНО ПОШУКУ */}
     </>
   );
 }

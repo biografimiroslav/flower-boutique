@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCartModal, setContactModal, setMobileMenu } from '../store/cartSlice';
+import { setCartModal, setContactModal, setMobileMenu, setSearchModal } from '../store/cartSlice'; // ІМПОРТУВАЛИ setSearchModal
 import { setAuthModal, setAuthView } from '../store/authSlice';
 
 export default function Header() {
@@ -42,13 +42,15 @@ export default function Header() {
           <li><a href="#">ENG</a></li>
         </ul>
         <ul className="nav2">
-          <a href="#"><img className="iconPhone" src="/img/search.svg" alt="Search" /></a>
+          {/* ТУТ ДОДАНА ЛОГІКА ДЛЯ ЛУПИ */}
+          <a href="#" onClick={(e) => { e.preventDefault(); dispatch(setSearchModal(true)); }}>
+            <img className="iconPhone" src="/img/search.svg" alt="Search" />
+          </a>
           
           <a href="#" onClick={handleUserClick}>
             <img className="iconPhone" src="/img/login.svg" alt="Login" />
           </a>
           
-          {/* ОСЬ ТУТ ДОДАНО ПЕРЕХІД НА /favorites */}
           <Link to="/favorites">
             <img className="iconPhone" src="/img/like.svg" alt="Like" />
           </Link>
