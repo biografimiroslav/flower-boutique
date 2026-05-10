@@ -12,28 +12,30 @@ export default function Favorites() {
   const [filters, setFilters] = useState({ cat: 'all', min: 0, max: 5000 });
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products').then(res => {
-      const liked = res.data.filter(p => favorites.includes(p.id));
-      setProducts(liked);
-      setFiltered(liked);
-    });
-  }, [favorites]);
+    if (token) {
+        axios.get('http://localhost:5000/api/products').then(res => {
+          const liked = res.data.filter(p => favorites.includes(p.id));
+          setProducts(liked);
+          setFiltered(liked);
+        });
+    }
+  }, [favorites, token]);
 
   useEffect(() => {
-    let res = allProducts.filter(p => filters.cat === 'all' || p.category === filters.cat);
-    res = res.filter(p => p.price >= filters.min && p.price <= filters.max);
+    let res = allProducts.filter(p => filters.cat === 'all' || p.category.toUpperCase() === filters.cat.toUpperCase());
+    res = res.filter(p => parseInt(p.price) >= filters.min && parseInt(p.price) <= filters.max);
     setFiltered(res);
   }, [filters, allProducts]);
 
-  if (!token) return <div style={{padding:'100px', textAlign:'center'}}><h2>Увійдіть, щоб бачити обране 🌸</h2></div>;
+  if (!token) return <div style={{padding:'150px 20px', textAlign:'center'}}><h2>Будь ласка, увійдіть в акаунт 🌸</h2></div>;
 
   const cats = ['ТРОЯНДИ', 'ПРОПОЗИЦІЯ ТИЖНЯ', 'ПІОНОВИДНІ ТРОЯНДИ ТА ПІОНИ', 'МІКСОВАНІ БУКЕТИ', 'ТЮЛЬПАНИ', 'ГОРТЕНЗІЇ', 'ДОДАТКОВО ДО БУКЕТУ'];
 
   return (
-    <div className="catalog-page-wrapper">
-      <h1 className="catalogTex" style={{fontSize: '42px'}}>ВПОДОБАНІ ТОВАРИ</h1>
+    <div className="catalog-page-wrapper fade-in-up">
+      <h1 className="catalogTex" style={{fontSize: '42px', marginBottom: '40px'}}>ВПОДОБАНІ ТОВАРИ</h1>
       
-      <div className="catalogCatrgory" style={{marginBottom: '40px'}}>
+      <div className="catalogCatrgory" style={{marginBottom: '50px'}}>
         <ul className="catalogCategories">
           <li onClick={() => setFilters({...filters, cat: 'all'})} style={{color: filters.cat === 'all' ? '#c86b8e' : ''}}>ВСЕ</li>
           {cats.map(c => (
@@ -46,7 +48,7 @@ export default function Favorites() {
       <div id="catalogGrid">
         {filtered.length > 0 ? filtered.map(p => (
           <ProductCard key={p.id} product={p} />
-        )) : <p style={{gridColumn:'1/-1', textAlign:'center', fontSize: '20px'}}>Нічого не знайдено за такими фільтрами 🌸</p>}
+        )) : <p style={{gridColumn:'1/-1', textAlign:'center', fontSize: '18px', color: '#666'}}>Нічого не знайдено за фільтрами 🌸</p>}
       </div>
     </div>
   );

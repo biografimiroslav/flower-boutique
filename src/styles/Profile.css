@@ -1,16 +1,29 @@
-.profile-page { padding: 40px 150px; min-height: 80vh; }
-.profile-header { display: flex; align-items: center; gap: 20px; margin-bottom: 40px; }
-.profile-nav { display: flex; gap: 30px; border-bottom: 2px solid #eee; margin-bottom: 30px; }
-.profile-nav-item { padding: 15px 5px; cursor: pointer; font-weight: 600; color: #888; transition: 0.3s; position: relative; }
+.profile-page { padding: 60px 150px; min-height: 80vh; }
+.profile-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 50px; }
+.profile-header h1 { color: #4a4a4a; font-weight: 400; }
+
+.profile-nav { display: flex; gap: 40px; border-bottom: 2px solid #eee; margin-bottom: 40px; }
+.profile-nav-item { padding: 15px 0; cursor: pointer; font-weight: 700; color: #aaa; transition: 0.3s; position: relative; font-size: 14px; letter-spacing: 1px; }
 .profile-nav-item.active { color: #c86b8e; }
-.profile-nav-item.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background: #c86b8e; }
+.profile-nav-item.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background: #c86b8e; border-radius: 2px; }
 
-.order-item { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #eee; }
-.order-header { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold; }
-.order-details { font-size: 14px; color: #666; }
+.order-item { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+.order-header { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: 700; color: #c86b8e; font-size: 18px; }
+.order-details { font-size: 15px; color: #666; line-height: 1.6; }
 
-.account-form { max-width: 500px; display: flex; flex-direction: column; gap: 15px; }
-.account-form input { padding: 12px; border: 1px solid #ddd; border-radius: 4px; }
-.save-btn { background: #c86b8e; color: white; padding: 12px; border-radius: 4px; font-weight: bold; margin-top: 10px; }
+.favs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 25px; }
 
-@media (max-width: 768px) { .profile-page { padding: 20px 15px; } }
+.account-form { max-width: 500px; }
+.account-form .form-group { margin-bottom: 20px; }
+.account-form label { display: block; margin-bottom: 8px; font-weight: 600; color: #4a4a4a; }
+.account-form input { width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; }
+.account-form input:focus { border-color: #c86b8e; }
+
+.save-btn { background: #c86b8e; color: white; width: 100%; padding: 15px; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+.save-btn:hover { background: #a85172; }
+
+.logout-btn { padding: 10px 25px; border: 2px solid #e74c3c; color: #e74c3c; font-weight: 700; border-radius: 4px; transition: 0.3s; }
+.logout-btn:hover { background: #e74c3c; color: white; }
+
+@media (max-width: 1024px) { .profile-page { padding: 40px 50px; } }
+@media (max-width: 768px) { .profile-page { padding: 20px 15px; } .profile-nav { gap: 20px; } .profile-nav-item { font-size: 12px; } }

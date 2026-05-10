@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../store/cartSlice';
-import { setFavorites } from '../store/authSlice';
+import { setFavorites, logout } from '../store/authSlice';
 import ProductCard from '../components/ProductCard';
 import '../styles/Product.css';
 
@@ -17,63 +17,64 @@ export default function Product() {
   const [isError, setIsError] = useState(false);
   
   const dispatch = useDispatch();
-  // Підключаємо юзера, токен та улюблені товари зі стейту
   const { user, token, favorites } = useSelector(state => state.auth);
 
   useEffect(() => {
     if (id) {
       setIsError(false);
       
-      // 1. Завантаження головного товару
       axios.get(`http://localhost:5000/api/products/${id}`)
         .then(res => { 
             setProduct(res.data); 
             document.title = `${res.data.name} - Flower Boutique`; 
         })
         .catch(err => {
-            console.error("Помилка завантаження товару:", err);
+            console.error("Pomylka zavantazhennya tovaru:", err);
             setIsError(true);
         });
       
-      // 2. Завантаження списку для "схожих" та "додатків"
       axios.get('http://localhost:5000/api/products')
         .then(res => {
             const allProducts = res.data;
             setRelated(allProducts.filter(p => p.id !== parseInt(id)).slice(0, 5));
             setAddons(allProducts.filter(p => p.category === 'ДОДАТКОВО ДО БУКЕТУ').slice(0, 10));
         })
-        .catch(err => console.error("Помилка завантаження бази:", err));
+        .catch(err => console.error("Pomylka zavantazhennya bazy:", err));
     }
   }, [id]);
 
-  // Функція лайку
   const toggleLike = async (e) => {
     e.preventDefault();
-    if (!user) return alert("Увійдіть в акаунт, щоб додавати товари в обране 🌸");
+    if (!user || !token) {
+        alert("Uviydit v akaunt");
+        return;
+    }
     
     try {
-        // Відправляємо запит на бекенд
         await axios.post('http://localhost:5000/api/favorites/toggle', { product_id: product.id }, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        // Оновлюємо список лайків у Redux
         const res = await axios.get('http://localhost:5000/api/favorites', { headers: { Authorization: `Bearer ${token}` } });
         dispatch(setFavorites(res.data));
     } catch (err) {
-        console.error("Помилка додавання в улюблене:", err);
+        console.error("Pomylka:", err);
+        if (err.response?.status === 422 || err.response?.status === 401) {
+            alert("Sesiya zakinchylas. Uviydit znovu");
+            dispatch(logout());
+        }
     }
   };
 
   if (isError) {
       return (
           <div style={{ padding: '100px', textAlign: 'center' }}>
-              <h2 style={{ color: '#4a4a4a', marginBottom: '20px' }}>ТОВАР НЕ ЗНАЙДЕНО</h2>
-              <Link to="/" style={{ color: '#c86b8e', fontWeight: 'bold', textDecoration: 'underline' }}>НА ГОЛОВНУ</Link>
+              <h2 style={{ color: '#4a4a4a', marginBottom: '20px' }}>TOVAR NE ZNAYDENO</h2>
+              <Link to="/" style={{ color: '#c86b8e', fontWeight: 'bold', textDecoration: 'underline' }}>NA GOLOVNU</Link>
           </div>
       );
   }
 
-  if (!product) return <div style={{ padding: '100px', textAlign: 'center', color: '#c86b8e' }}>ЗАВАНТАЖЕННЯ...</div>;
+  if (!product) return <div style={{ padding: '100px', textAlign: 'center', color: '#c86b8e' }}>ZAVANTAZHENNYA...</div>;
 
   const handleAddAddon = (addon) => {
     dispatch(addToCart({ 
@@ -84,7 +85,6 @@ export default function Product() {
     }));
   };
 
-  // Перевіряємо, чи є цей товар у масиві лайкнутих
   const isLiked = favorites.includes(product.id);
 
   return (
@@ -96,12 +96,9 @@ export default function Product() {
         <div className="product-info-container">
           <div className="product-header-row">
             <h1 className="product-title">{product.name}</h1>
-            
-            {/* КНОПКА ЛАЙКУ */}
             <button className="product-like-btn" onClick={toggleLike}>
                <img src={isLiked ? "/img/likePink.svg" : "/img/like.svg"} alt="Like" />
             </button>
-
           </div>
 
           <p className="product-subtitle">Додатково до букета:</p>

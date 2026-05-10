@@ -4,7 +4,7 @@ import sqlite3
 import random
 import smtplib
 from email.mime.text import MIMEText
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 
@@ -12,22 +12,11 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 app.config['JWT_SECRET_KEY'] = 'slavik-super-secret-key-2026'
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 jwt = JWTManager(app)
 
 SENDER_EMAIL = "flower.boutique.uzh@gmail.com" 
 SENDER_PASSWORD = "onnxfahbilcplado" 
-
-# --- Допоміжні функції ---
-@app.route('/api/products/<int:pid>')
-def get_product(pid):
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM products WHERE id=?', (pid,))
-    r = cursor.fetchone()
-    conn.close()
-    if r:
-        return jsonify(dict(r))
-    return jsonify({"error": "Tovar ne znaydeno"}), 404
 
 def get_db():
     conn = sqlite3.connect('products.db')
@@ -45,11 +34,9 @@ def send_email(to_email, subject, body):
         server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
         server.quit()
         return True
-    except Exception as e:
-        print(f"Error: {e}")
+    except Exception:
         return False
 
-# --- CORS Fix ---
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
@@ -59,7 +46,6 @@ def handle_preflight():
         res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         return res, 200
 
-# --- АВТОРИЗАЦІЯ ---
 @app.route('/api/send-code', methods=['POST'])
 def send_code():
     data = request.json
@@ -67,14 +53,14 @@ def send_code():
     conn = get_db(); cursor = conn.cursor()
     if action == 'reset':
         cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
-        if not cursor.fetchone(): return jsonify({"error": "Email не знайдено"}), 404
+        if not cursor.fetchone(): return jsonify({"error": "Email ne znaydeno"}), 404
     code = str(random.randint(1000, 9999))
     cursor.execute('DELETE FROM otp_codes WHERE email = ?', (email,))
     cursor.execute('INSERT INTO otp_codes (email, code) VALUES (?, ?)', (email, code))
     conn.commit(); conn.close()
-    if send_email(email, "Код підтвердження", f"<h1>Ваш код: {code}</h1>"):
+    if send_email(email, "Kod pidtverdzhennya", f"<h1>Vash kod: {code}</h1>"):
         return jsonify({"success": True})
-    return jsonify({"error": "Помилка пошти"}), 500
+    return jsonify({"error": "Pomylka poshty"}), 500
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -82,7 +68,7 @@ def register():
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT code FROM otp_codes WHERE email = ?', (data.get('email'),))
     db_code = cursor.fetchone()
-    if not db_code or db_code[0] != data.get('code'): return jsonify({"error": "Код невірний"}), 400
+    if not db_code or db_code[0] != data.get('code'): return jsonify({"error": "Kod nevirnyi"}), 400
     try:
         pw = generate_password_hash(data.get('password'))
         cursor.execute('INSERT INTO users (name, email, phone, password_hash) VALUES (?,?,?,?)', 
@@ -91,8 +77,28 @@ def register():
         conn.commit()
         token = create_access_token(identity={'id': u_id, 'name': data.get('name'), 'email': data.get('email'), 'phone': data.get('phone')})
         return jsonify({"success": True, "token": token, "user": {"id": u_id, "name": data.get('name'), "email": data.get('email'), 'phone': data.get('phone')}})
-    except: return jsonify({"error": "Email зайнятий"}), 400
+    except: return jsonify({"error": "Email zaynyatiy"}), 400
     finally: conn.close()
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data = request.json
+    email = data.get('email')
+    code = data.get('code')
+    new_password = data.get('new_password')
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT code FROM otp_codes WHERE email = ?', (email,))
+    db_code = cursor.fetchone()
+    if not db_code or db_code[0] != code:
+        conn.close()
+        return jsonify({"error": "Nevirnyi kod"}), 400
+    hashed_password = generate_password_hash(new_password)
+    cursor.execute('UPDATE users SET password_hash = ? WHERE email = ?', (hashed_password, email))
+    cursor.execute('DELETE FROM otp_codes WHERE email = ?', (email,))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True})
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -105,9 +111,8 @@ def login():
         user_data = {"id": u['id'], "name": u['name'], "email": u['email'], "phone": u['phone']}
         token = create_access_token(identity=user_data)
         return jsonify({"success": True, "token": token, "user": user_data})
-    return jsonify({"error": "Дані невірні"}), 401
+    return jsonify({"error": "Dani nevirni"}), 401
 
-# --- ПРОФІЛЬ ТА ЗАМОВЛЕННЯ ---
 @app.route('/api/user/orders', methods=['GET'])
 @jwt_required()
 def get_user_orders():
@@ -131,7 +136,6 @@ def update_profile():
     conn.commit(); conn.close()
     return jsonify({"success": True})
 
-# --- УЛЮБЛЕНЕ (FAVORITES) ---
 @app.route('/api/favorites', methods=['GET'])
 @jwt_required()
 def get_favorites():
@@ -154,7 +158,6 @@ def toggle_favorite():
     conn.commit(); conn.close()
     return jsonify({"success": True})
 
-# --- ТОВАРИ ТА ЧЕКАУТ ---
 @app.route('/api/products')
 def get_products():
     conn = get_db(); cursor = conn.cursor()
@@ -162,11 +165,19 @@ def get_products():
     res = [dict(r) for r in cursor.fetchall()]
     conn.close(); return jsonify(res)
 
+@app.route('/api/products/<int:pid>')
+def get_product(pid):
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute('SELECT * FROM products WHERE id=?', (pid,))
+    r = cursor.fetchone(); conn.close()
+    if r: return jsonify(dict(r))
+    return jsonify({"error": "Tovar ne znaydeno"}), 404
+
 @app.route('/api/checkout', methods=['POST'])
 def checkout():
     data = request.json
     cust = data.get('customer')
-    uid = data.get('user_id') # Може бути None для гостей
+    uid = data.get('user_id') 
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, date) VALUES (?,?,?,?,?,?,?,?)',
                    (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
