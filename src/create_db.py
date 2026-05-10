@@ -4,7 +4,6 @@ def init_db():
     conn = sqlite3.connect('products.db')
     cursor = conn.cursor()
 
-    # 1. Товари
     cursor.execute('DROP TABLE IF EXISTS products')
     cursor.execute('''CREATE TABLE products (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -14,7 +13,6 @@ def init_db():
         category TEXT NOT NULL
     )''')
 
-    # 2. Замовлення (ОСЬ ТУТ ДОДАНО user_id та email)
     cursor.execute('DROP TABLE IF EXISTS orders')
     cursor.execute('''CREATE TABLE orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -38,7 +36,6 @@ def init_db():
         price INTEGER
     )''')
 
-    # 3. Користувачі
     cursor.execute('DROP TABLE IF EXISTS users')
     cursor.execute('''CREATE TABLE users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,7 +45,6 @@ def init_db():
         password_hash TEXT NOT NULL
     )''')
 
-    # 4. Улюблене
     cursor.execute('DROP TABLE IF EXISTS favorites')
     cursor.execute('''CREATE TABLE favorites (
         user_id INTEGER,
@@ -56,7 +52,6 @@ def init_db():
         UNIQUE(user_id, product_id)
     )''')
 
-    # 5. ТИМЧАСОВІ КОДИ (OTP)
     cursor.execute('DROP TABLE IF EXISTS otp_codes')
     cursor.execute('''CREATE TABLE otp_codes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -65,7 +60,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
 
-    # Початкові товари
     products = [
         ('Півонія Pink Charm', 2000, '/img/category3.png', 'ПІОНОВИДНІ ТРОЯНДИ ТА ПІОНИ'),
         ('Троянда Red Velvet', 1800, '/img/category1.png', 'ТРОЯНДИ'),
@@ -86,7 +80,7 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅ База даних повністю оновлена!")
+    print("Baza danykh onovlena")
 
 if __name__ == '__main__':
     init_db()
