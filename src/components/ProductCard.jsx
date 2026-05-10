@@ -43,9 +43,6 @@ export default function ProductCard({ product }) {
         <button className="storeFrontListButton" onClick={() => dispatch(addToCart({id: product.id, name: product.name, price: product.price, img: product.image_url}))}>
           Додати <img src="/img/busketForButton.svg" alt="Кошик" />
         </button>
-        <button onClick={toggleLike} style={{padding:'10px', border:'1px solid #c86b8e', borderRadius:'4px', background: 'transparent', cursor: 'pointer'}}>
-          <img src={isLiked ? "/img/likePink.svg" : "/img/like.svg"} style={{width:'20px'}} alt="Лайк" />
-        </button>
       </div>
     </div>
   );

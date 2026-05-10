@@ -11,13 +11,30 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-app.config['JWT_SECRET_KEY'] = 'slavik-super-secret-key-2026'
+app.config['JWT_SECRET_KEY'] = 'slavik-super-secret-key-2026-flower-boutique-pro'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 jwt = JWTManager(app)
 
 SENDER_EMAIL = "flower.boutique.uzh@gmail.com" 
 SENDER_PASSWORD = "onnxfahbilcplado" 
 
+# --- ОБРОБНИКИ ПОМИЛОК JWT ---
+@jwt.invalid_token_loader
+def invalid_token_callback(error):
+    print(f"!!! JWT ПОМИЛКА: {error}")
+    return jsonify({"error": f"Invalid token: {error}"}), 422
+
+@jwt.unauthorized_loader
+def missing_token_callback(error):
+    print(f"!!! JWT ВІДСУТНІЙ: {error}")
+    return jsonify({"error": "Missing token"}), 401
+
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    print(f"!!! JWT ПРОСТРОЧЕНИЙ !!!")
+    return jsonify({"error": "Expired token"}), 401
+
+# --- БД І ПОШТА ---
 def get_db():
     conn = sqlite3.connect('products.db')
     conn.row_factory = sqlite3.Row
@@ -34,7 +51,8 @@ def send_email(to_email, subject, body):
         server.sendmail(SENDER_EMAIL, to_email, msg.as_string())
         server.quit()
         return True
-    except Exception:
+    except Exception as e:
+        print(f"Email Error: {e}")
         return False
 
 @app.before_request
@@ -46,6 +64,7 @@ def handle_preflight():
         res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         return res, 200
 
+# --- АВТОРИЗАЦІЯ ---
 @app.route('/api/send-code', methods=['POST'])
 def send_code():
     data = request.json
@@ -75,7 +94,8 @@ def register():
                        (data.get('name'), data.get('email'), data.get('phone'), pw))
         u_id = cursor.lastrowid
         conn.commit()
-        token = create_access_token(identity={'id': u_id, 'name': data.get('name'), 'email': data.get('email'), 'phone': data.get('phone')})
+        # ТУТ ВИПРАВЛЕНО: ПЕРЕДАЄМО ТІЛЬКИ ID ЯК РЯДОК
+        token = create_access_token(identity=str(u_id))
         return jsonify({"success": True, "token": token, "user": {"id": u_id, "name": data.get('name'), "email": data.get('email'), 'phone': data.get('phone')}})
     except: return jsonify({"error": "Email zaynyatiy"}), 400
     finally: conn.close()
@@ -109,14 +129,16 @@ def login():
     conn.close()
     if u and check_password_hash(u['password_hash'], data.get('password')):
         user_data = {"id": u['id'], "name": u['name'], "email": u['email'], "phone": u['phone']}
-        token = create_access_token(identity=user_data)
+        # ТУТ ВИПРАВЛЕНО: ПЕРЕДАЄМО ТІЛЬКИ ID ЯК РЯДОК
+        token = create_access_token(identity=str(u['id']))
         return jsonify({"success": True, "token": token, "user": user_data})
     return jsonify({"error": "Dani nevirni"}), 401
 
+# --- КОРИСТУВАЧ І УЛЮБЛЕНЕ ---
 @app.route('/api/user/orders', methods=['GET'])
 @jwt_required()
 def get_user_orders():
-    uid = get_jwt_identity()['id']
+    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', (uid,))
     orders = [dict(row) for row in cursor.fetchall()]
@@ -129,7 +151,7 @@ def get_user_orders():
 @app.route('/api/user/update', methods=['POST'])
 @jwt_required()
 def update_profile():
-    uid = get_jwt_identity()['id']
+    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
     data = request.json
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('UPDATE users SET name=?, phone=? WHERE id=?', (data['name'], data['phone'], uid))
@@ -139,7 +161,7 @@ def update_profile():
 @app.route('/api/favorites', methods=['GET'])
 @jwt_required()
 def get_favorites():
-    uid = get_jwt_identity()['id']
+    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT product_id FROM favorites WHERE user_id = ?', (uid,))
     favs = [row[0] for row in cursor.fetchall()]
@@ -149,7 +171,7 @@ def get_favorites():
 @app.route('/api/favorites/toggle', methods=['POST'])
 @jwt_required()
 def toggle_favorite():
-    uid = get_jwt_identity()['id']
+    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
     pid = request.json.get('product_id')
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT * FROM favorites WHERE user_id=? AND product_id=?', (uid, pid))
@@ -158,6 +180,7 @@ def toggle_favorite():
     conn.commit(); conn.close()
     return jsonify({"success": True})
 
+# --- ТОВАРИ ТА ЧЕКАУТ ---
 @app.route('/api/products')
 def get_products():
     conn = get_db(); cursor = conn.cursor()
