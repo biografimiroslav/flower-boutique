@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function PriceSlider({ initialMin = 0, initialMax = 5000, onEnter }) {
+export default function PriceSlider({ initialMin = 0, initialMax = 15000, onEnter }) {
   const [min, setMin] = useState(initialMin);
   const [max, setMax] = useState(initialMax);
   const [isOpen, setIsOpen] = useState(false);
