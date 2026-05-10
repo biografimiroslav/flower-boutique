@@ -7,6 +7,7 @@ import Catalog from './pages/Catalog';
 import Product from './pages/Product';
 import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
+import Favorites from './pages/Favorites';
 import AuthModals from './components/AuthModals';
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/product" element={<Product />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/favorites" element={<Favorites />} />
       </Routes>
       <Footer />
       <Modals />

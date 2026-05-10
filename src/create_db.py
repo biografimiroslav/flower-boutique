@@ -14,17 +14,28 @@ def init_db():
         category TEXT NOT NULL
     )''')
 
-    # 2. Замовлення
+    # 2. Замовлення (ОСЬ ТУТ ДОДАНО user_id та email)
     cursor.execute('DROP TABLE IF EXISTS orders')
     cursor.execute('''CREATE TABLE orders (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        name TEXT, phone TEXT, address TEXT, comment TEXT, total INTEGER, date TEXT
+        user_id INTEGER,
+        name TEXT, 
+        phone TEXT, 
+        email TEXT,
+        address TEXT, 
+        comment TEXT, 
+        total INTEGER, 
+        date TEXT
     )''')
 
     cursor.execute('DROP TABLE IF EXISTS order_items')
     cursor.execute('''CREATE TABLE order_items (
         id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        order_id INTEGER, product_id INTEGER, product_name TEXT, qty INTEGER, price INTEGER
+        order_id INTEGER, 
+        product_id INTEGER, 
+        product_name TEXT, 
+        qty INTEGER, 
+        price INTEGER
     )''')
 
     # 3. Користувачі
@@ -45,7 +56,7 @@ def init_db():
         UNIQUE(user_id, product_id)
     )''')
 
-    # 5. ТИМЧАСОВІ КОДИ (OTP) - САМЕ ЦЬОГО БРАКУВАЛО
+    # 5. ТИМЧАСОВІ КОДИ (OTP)
     cursor.execute('DROP TABLE IF EXISTS otp_codes')
     cursor.execute('''CREATE TABLE otp_codes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,8 +69,17 @@ def init_db():
     products = [
         ('Півонія Pink Charm', 2000, '/img/category3.png', 'ПІОНОВИДНІ ТРОЯНДИ ТА ПІОНИ'),
         ('Троянда Red Velvet', 1800, '/img/category1.png', 'ТРОЯНДИ'),
+        ('Півонія Sarah Bernhardt', 2500, '/img/category3.png', 'ПІОНОВИДНІ ТРОЯНДИ ТА ПІОНИ'),
+        ('Гортензія Romance', 2200, '/img/category6.png', 'ГОРТЕНЗІЇ'),
+        ('Тюльпан Queen of Night', 1200, '/img/category5.png', 'ТЮЛЬПАНИ'),
+        ('Троянда Lady Essex', 1900, '/img/category1.png', 'ТРОЯНДИ'),
         ('Евкаліпт Cinerea', 800, '/img/category8.png', 'ДОДАТКОВО ДО БУКЕТУ'),
+        ('Піоноподібна троянда', 2300, '/img/category3.png', 'ПІОНОВИДНІ ТРОЯНДИ ТА ПІОНИ'),
+        ('Мікс букети', 3000, '/img/category4.png', 'МІКСОВАНІ БУКЕТИ'),
+        ('Гортензія Premium', 2800, '/img/category6.png', 'ГОРТЕНЗІЇ'),
+        ('Тюльпан Mix', 1500, '/img/category5.png', 'ТЮЛЬПАНИ'),
         ('Сукуленти', 600, '/img/category8.png', 'ДОДАТКОВО ДО БУКЕТУ'),
+        ('Поліподиум', 900, '/img/category7.png', 'БУКЕТИ З НЕ ТРОЯНД'),
         ('Пропозиція тижня', 1600, '/img/category2.png', 'ПРОПОЗИЦІЯ ТИЖНЯ')
     ]
     cursor.executemany('INSERT INTO products (name, price, image_url, category) VALUES (?, ?, ?, ?)', products)
