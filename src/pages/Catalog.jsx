@@ -13,7 +13,7 @@ export default function Catalog() {
 
   const category = params.get('category') || 'all';
   const min = parseInt(params.get('min')) || 0;
-  const max = parseInt(params.get('max')) || 5000;
+  const max = parseInt(params.get('max')) || 15000;
 
   useEffect(() => {
     axios.get('http://localhost:5000/api/products')

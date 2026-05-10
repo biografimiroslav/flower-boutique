@@ -9,7 +9,7 @@ export default function Favorites() {
   const { favorites, token } = useSelector(state => state.auth);
   const [allProducts, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [filters, setFilters] = useState({ cat: 'all', min: 0, max: 5000 });
+  const [filters, setFilters] = useState({ cat: 'all', min: 0, max: 15000 });
 
   useEffect(() => {
     if (token) {
