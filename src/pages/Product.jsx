@@ -1,45 +1,80 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../store/cartSlice';
+import { setFavorites } from '../store/authSlice';
 import ProductCard from '../components/ProductCard';
-import '../styles/Product.css'; // Переконайся, що імпорт стилів на місці
+import '../styles/Product.css';
 
 export default function Product() {
   const [params] = useSearchParams();
   const id = params.get('id');
+  
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
-  const [addons, setAddons] = useState([]); // Стейт для доповнень
+  const [addons, setAddons] = useState([]);
+  const [isError, setIsError] = useState(false);
+  
   const dispatch = useDispatch();
+  // Підключаємо юзера, токен та улюблені товари зі стейту
+  const { user, token, favorites } = useSelector(state => state.auth);
 
   useEffect(() => {
     if (id) {
-      // 1. Беремо головний товар
+      setIsError(false);
+      
+      // 1. Завантаження головного товару
       axios.get(`http://localhost:5000/api/products/${id}`)
         .then(res => { 
             setProduct(res.data); 
             document.title = `${res.data.name} - Flower Boutique`; 
         })
-        .catch(err => console.error("Помилка завантаження товару:", err));
+        .catch(err => {
+            console.error("Помилка завантаження товару:", err);
+            setIsError(true);
+        });
       
-      // 2. Беремо всі товари, щоб розкидати їх на "Схожі" та "Доповнення"
+      // 2. Завантаження списку для "схожих" та "додатків"
       axios.get('http://localhost:5000/api/products')
         .then(res => {
             const allProducts = res.data;
-            // Відфільтровуємо 5 схожих (крім поточного)
             setRelated(allProducts.filter(p => p.id !== parseInt(id)).slice(0, 5));
-            // Відфільтровуємо товари ТІЛЬКИ з категорії "ДОДАТКОВО ДО БУКЕТУ"
             setAddons(allProducts.filter(p => p.category === 'ДОДАТКОВО ДО БУКЕТУ').slice(0, 10));
         })
         .catch(err => console.error("Помилка завантаження бази:", err));
     }
   }, [id]);
 
-  if (!product) return <div style={{ padding: '100px', textAlign: 'center', color: '#c86b8e' }}>Завантаження...</div>;
+  // Функція лайку
+  const toggleLike = async (e) => {
+    e.preventDefault();
+    if (!user) return alert("Увійдіть в акаунт, щоб додавати товари в обране 🌸");
+    
+    try {
+        // Відправляємо запит на бекенд
+        await axios.post('http://localhost:5000/api/favorites/toggle', { product_id: product.id }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        // Оновлюємо список лайків у Redux
+        const res = await axios.get('http://localhost:5000/api/favorites', { headers: { Authorization: `Bearer ${token}` } });
+        dispatch(setFavorites(res.data));
+    } catch (err) {
+        console.error("Помилка додавання в улюблене:", err);
+    }
+  };
 
-  // Функція для додавання "додатку" в кошик по кліку
+  if (isError) {
+      return (
+          <div style={{ padding: '100px', textAlign: 'center' }}>
+              <h2 style={{ color: '#4a4a4a', marginBottom: '20px' }}>ТОВАР НЕ ЗНАЙДЕНО</h2>
+              <Link to="/" style={{ color: '#c86b8e', fontWeight: 'bold', textDecoration: 'underline' }}>НА ГОЛОВНУ</Link>
+          </div>
+      );
+  }
+
+  if (!product) return <div style={{ padding: '100px', textAlign: 'center', color: '#c86b8e' }}>ЗАВАНТАЖЕННЯ...</div>;
+
   const handleAddAddon = (addon) => {
     dispatch(addToCart({ 
         id: addon.id, 
@@ -48,6 +83,9 @@ export default function Product() {
         img: addon.image_url 
     }));
   };
+
+  // Перевіряємо, чи є цей товар у масиві лайкнутих
+  const isLiked = favorites.includes(product.id);
 
   return (
     <>
@@ -58,12 +96,14 @@ export default function Product() {
         <div className="product-info-container">
           <div className="product-header-row">
             <h1 className="product-title">{product.name}</h1>
-            <button className="product-like-btn">
-               <img src="/img/likePink.svg" alt="Like" />
+            
+            {/* КНОПКА ЛАЙКУ */}
+            <button className="product-like-btn" onClick={toggleLike}>
+               <img src={isLiked ? "/img/likePink.svg" : "/img/like.svg"} alt="Like" />
             </button>
+
           </div>
 
-          {/* БЛОК "ДОДАТКОВО ДО БУКЕТУ" */}
           <p className="product-subtitle">Додатково до букета:</p>
           <ul className="addons-grid">
             {addons.map(addon => (
@@ -71,7 +111,6 @@ export default function Product() {
                 key={addon.id} 
                 className="addon-item" 
                 onClick={() => handleAddAddon(addon)} 
-                title="Натисніть, щоб додати в кошик"
               >
                 <img className="addon-img" src={addon.image_url} alt={addon.name} />
                 <p className="addon-price">{addon.price} грн</p>

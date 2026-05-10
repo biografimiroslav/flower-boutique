@@ -18,6 +18,17 @@ SENDER_EMAIL = "flower.boutique.uzh@gmail.com"
 SENDER_PASSWORD = "onnxfahbilcplado" 
 
 # --- Допоміжні функції ---
+@app.route('/api/products/<int:pid>')
+def get_product(pid):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM products WHERE id=?', (pid,))
+    r = cursor.fetchone()
+    conn.close()
+    if r:
+        return jsonify(dict(r))
+    return jsonify({"error": "Tovar ne znaydeno"}), 404
+
 def get_db():
     conn = sqlite3.connect('products.db')
     conn.row_factory = sqlite3.Row
