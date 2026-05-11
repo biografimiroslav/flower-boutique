@@ -36,7 +36,7 @@ def expired_token_callback(jwt_header, jwt_payload):
 
 # --- БД І ПОШТА ---
 def get_db():
-    conn = sqlite3.connect('products.db')
+    conn = sqlite3.connect('/home/admin_flower/flower-boutique/src/products.db')
     conn.row_factory = sqlite3.Row
     return conn
 
