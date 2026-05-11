@@ -13,7 +13,7 @@ export default function Favorites() {
 
   useEffect(() => {
     if (token) {
-        axios.get('/api/products').then(res => {
+        axios.get(import.meta.env.VITE_API_URL + '/products').then(res => {
           const liked = res.data.filter(p => favorites.includes(p.id));
           setProducts(liked);
           setFiltered(liked);
@@ -33,9 +33,9 @@ export default function Favorites() {
 
   return (
     <div className="catalog-page-wrapper fade-in-up">
-      <h1 className="catalogTex" style={{fontSize: '42px', marginBottom: '40px'}}>ВПОДОБАНІ ТОВАРИ</h1>
+      <h1 className="catalogTex">ВПОДОБАНІ ТОВАРИ</h1>
       
-      <div className="catalogCatrgory" style={{marginBottom: '50px'}}>
+      <div className="catalogCatrgory">
         <ul className="catalogCategories">
           <li onClick={() => setFilters({...filters, cat: 'all'})} style={{color: filters.cat === 'all' ? '#c86b8e' : ''}}>ВСЕ</li>
           {cats.map(c => (

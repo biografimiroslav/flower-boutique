@@ -40,7 +40,6 @@ input, textarea {
   font-family: inherit;
 }
 
-/* --- Анімація появи контенту --- */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -57,7 +56,6 @@ input, textarea {
   animation: fadeInUp 0.8s ease-out forwards;
 }
 
-/* --- Хедер --- */
 .header {
   background: #f9f5f7;
   box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
@@ -174,7 +172,6 @@ input, textarea {
   filter: drop-shadow(0 4px 4px rgba(200, 107, 142, 0.3));
 }
 
-/* --- Вітрина (Товари) --- */
 .storeFront {
   padding: 30px 150px;
 }
@@ -278,6 +275,7 @@ input, textarea {
   padding: 15px 30px;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 7px;
   margin-top: 20px;
   width: 100%;
@@ -336,7 +334,6 @@ input, textarea {
 #sliderLeft { left: -20px; }
 #sliderRight { right: -20px; }
 
-/* --- Підбір за ціною --- */
 .selectionByPrice {
   padding: 30px 15px;
   background: rgba(249, 245, 247, 0.2);
@@ -423,7 +420,6 @@ input, textarea {
   box-shadow: 0 6px 15px rgba(200, 107, 142, 0.4);
 }
 
-/* --- Категорії --- */
 .categoriesGrid {
   display: grid;
   width: 100%;
@@ -482,7 +478,6 @@ input, textarea {
 .non-rose { grid-column: span 9; background-image: url("/img/category7.png"); }
 .addition { grid-column: span 3; background-image: url("/img/category8.png"); }
 
-/* --- Instagram Feed --- */
 .instFeed {
   padding: 30px 15px;
 }
@@ -529,7 +524,6 @@ input, textarea {
   transform: scale(1.1);
 }
 
-/* --- Про нас --- */
 .about {
   background: #f9f5f7;
   box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25) inset, 0 4px 4px 0 rgba(0, 0, 0, 0.25);
@@ -581,7 +575,6 @@ input, textarea {
   transform: scale(1.05) rotate(-2deg);
 }
 
-/* --- Футер --- */
 .footer {
   background: #f9f5f7;
   box-shadow: 0 4px 4px 0 rgba(0, 0, 0, 0.25) inset;
@@ -592,6 +585,14 @@ input, textarea {
 
 .footerLogoA {
   transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+
+@media screen and (max-width: 768px) {
+  .footerLogoA {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  margin: auto;
+}
 }
 
 .footerLogoA:hover {
@@ -638,9 +639,6 @@ input, textarea {
   transform: scale(1.05);
 }
 
-/* =========================================
-   ПОВЗУНОК ЦІНИ (RANGE SLIDER)
-   ========================================= */
 .price-slider-dropdown {
   position: absolute;
   top: 100%;
@@ -730,9 +728,6 @@ input, textarea {
   cursor: pointer; 
 }
 
-/* =========================================
-   АДАПТИВНІСТЬ (MEDIA QUERIES)
-   ========================================= */
 @media screen and (min-width: 1024px) {
   .aboutImageWrapper img {
     border-radius: 8px;
@@ -765,7 +760,6 @@ input, textarea {
 }
 
 @media screen and (max-width: 768px) {
-  
   .header { padding: 10px 15px; }
   .chooseLanguage { font-size: 13px; }
   .nav2 { gap: 8px; }
@@ -775,7 +769,8 @@ input, textarea {
   .sliderArrow { width: 40px; height: 40px; font-size: 20px; }
   #sliderLeft { left: -10px; }
   #sliderRight { right: -10px; }
-  .storeFrontListButton { padding: 10px 5px; font-size: 13px; }
+  .storeFrontListButton { padding: 8px 5px; font-size: 12px; white-space: nowrap; gap: 4px; }
+  .storeFrontListButton img { width: 16px; height: 16px; }
   .selectionByPriceForm { flex-direction: column; }
   .selectionByPriceInput { border-radius: 4px 4px 0 0; border-right: 2px solid #c86b8e; border-bottom: none; }
   .selectionByPriceEnter { border-radius: 0 0 4px 4px; }
@@ -786,34 +781,80 @@ input, textarea {
   .instFeed { display: none; }
   .about { padding: 30px 15px; }
   .footer { padding: 30px 15px; flex-direction: column; align-items: flex-start; text-align: left; gap: 30px; }
-  .footerNav { flex-direction: column; gap: 25px; text-align: left; }
+  .footerNav { margin: auto; flex-direction: column; gap: 25px; text-align: center; }
   .paySystemsImg { margin-left: 0; }
-  .storeFrontListButton {
-    padding: 8px 5px;
-    font-size: 12px;
-    white-space: nowrap;
-    gap: 4px;
+
+  .selectionByPriceTitle {
+    font-size: 24px;
+    margin-bottom: 20px;
   }
 
-  .storeFrontListButton img {
-    width: 16px;
-    height: 16px;
+  .selectionByPriceContainer {
+    padding: 0 10px;
+  }
+
+  .selectionByPriceForm {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .selectionByPriceInput {
+    border-radius: 4px 4px 0 0;
+    border-right: 2px solid #c86b8e;
+    border-bottom: none;
+    width: 100%;
+    padding: 12px 15px;
+  }
+
+  .selectionByPriceEnter {
+    border-radius: 0 0 4px 4px;
+    width: 100%;
+    padding: 12px;
+  }
+
+  .selectionByPriceButtons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .selectionByPriceButton {
+    padding: 10px 5px;
+    font-size: 14px;
+    width: 100%;
   }
 }
 
 
-.storeFrontListButton {
-  border-radius: 2px;
-  background: #c86b8e;
-  color: #fff8fb;
-  font-size: 16px;
-  font-weight: 700;
-  padding: 15px 30px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 7px;
-  margin-top: 20px;
-  width: 100%;
-  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+
+
+
+
+
+
+
+
+
+.legalWrapper {
+  padding: 80px 150px 60px;
+  color: #4a4a4a;
+  line-height: 1.6;
+}
+.legalTitle {
+  margin-bottom: 40px;
+  font-weight: 400;
+  font-size: 32px;
+}
+.legalContent {
+  max-width: 900px;
+}
+
+@media screen and (max-width: 1024px) {
+  .legalWrapper { padding: 60px 50px 50px; }
+}
+
+@media screen and (max-width: 768px) {
+  .legalWrapper { padding: 40px 15px 40px; }
+  .legalTitle { font-size: 24px; margin-bottom: 20px; }
 }

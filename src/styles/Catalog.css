@@ -210,6 +210,7 @@
 }
 .storefront-header { display: none; }
 .catalog { display: block; }
+
 @media screen and (max-width: 1024px) {
   .catalog { display: none; }
   .storefront-header { display: block; }
@@ -217,6 +218,7 @@
   #catalogGrid { grid-template-columns: repeat(3, 1fr); gap: 20px; }
   #catalogGrid .imgWrapper { height: 340px; }
 }
+
 @media screen and (max-width: 768px) {
   .catalog-page-wrapper { padding: 20px 15px; }
   #catalogGrid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
@@ -224,10 +226,42 @@
   .downMore { padding: 12px 40px; font-size: 14px; }
   .price-filter-wrapper { flex-direction: column; align-items: stretch; }
   .price-inputs { flex-direction: row; margin: 15px 0; }
+  .catalogTex {
+    font-size: 24px !important;
+    margin-bottom: 20px !important;
+  }
+  .catalogCatrgory {
+    padding: 20px 15px !important;
+    margin-bottom: 20px !important;
+  }
+  .catalogCategories {
+    gap: 10px 15px;
+  }
+
+  .price-filter-wrapper {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .price-inputs {
+    flex-direction: row;
+    width: 100%;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .price-inputs input {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .price-filter-btn {
+    width: 100%;
+    padding: 12px;
+  }
 }
+
 @media (max-width: 480px) {
   .price-inputs { flex-direction: column; }
   .price-divider { display: none; }
 }
-
-
