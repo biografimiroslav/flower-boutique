@@ -20,19 +20,19 @@ export default function Profile() {
     if (!token) return navigate('/');
     
     // Історія замовлень
-    axios.get('http://localhost:5000/api/user/orders', { headers: { Authorization: `Bearer ${token}` } })
+    axios.get('/api/user/orders', { headers: { Authorization: `Bearer ${token}` } })
       .then(res => setOrders(res.data))
       .catch(err => console.error(err));
 
     // Товари для вкладки "Обране"
-    axios.get('http://localhost:5000/api/products')
+    axios.get('/api/products')
       .then(res => setFavProducts(res.data.filter(p => favorites.includes(p.id))));
   }, [token, favorites, navigate]);
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/user/update', formData, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.post('/api/user/update', formData, { headers: { Authorization: `Bearer ${token}` } });
       dispatch(setAuth({ token, user: { ...user, ...formData } }));
       alert("Дані успішно оновлено! ✨");
     } catch (err) { alert("Помилка при оновленні."); }

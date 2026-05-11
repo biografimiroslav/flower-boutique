@@ -29,7 +29,7 @@ export default function AuthModals() {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/login', { email: form.email, password: form.password });
+      const res = await axios.post('/api/login', { email: form.email, password: form.password });
       dispatch(setAuth({ token: res.data.token, user: res.data.user }));
       close();
     } catch (err) {
@@ -45,7 +45,7 @@ export default function AuthModals() {
     }
     setLoading(true); setError('');
     try {
-      await axios.post('http://localhost:5000/api/send-code', { email: form.email, action: actionType });
+      await axios.post('/api/send-code', { email: form.email, action: actionType });
       dispatch(setTempData({ ...form }));
       dispatch(setAuthView(actionType === 'register' ? 'register_code' : 'reset_code'));
       setForm({ ...form, code: '' });
@@ -59,7 +59,7 @@ export default function AuthModals() {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/register', { ...tempData, code: form.code });
+      const res = await axios.post('/api/register', { ...tempData, code: form.code });
       dispatch(setAuth({ token: res.data.token, user: res.data.user }));
       close();
     } catch (err) {
@@ -72,7 +72,7 @@ export default function AuthModals() {
     e.preventDefault();
     setLoading(true); setError('');
     try {
-      await axios.post('http://localhost:5000/api/reset-password', { email: tempData.email, code: form.code, new_password: form.password });
+      await axios.post('/api/reset-password', { email: tempData.email, code: form.code, new_password: form.password });
       alert('Пароль успішно змінено!');
       dispatch(setAuthView('login'));
     } catch (err) {

@@ -23,7 +23,7 @@ export default function Product() {
     if (id) {
       setIsError(false);
       
-      axios.get(`http://localhost:5000/api/products/${id}`)
+      axios.get(`/api/products/${id}`)
         .then(res => { 
             setProduct(res.data); 
             document.title = `${res.data.name} - Flower Boutique`; 
@@ -33,7 +33,7 @@ export default function Product() {
             setIsError(true);
         });
       
-      axios.get('http://localhost:5000/api/products')
+      axios.get('/api/products')
         .then(res => {
             const allProducts = res.data;
             setRelated(allProducts.filter(p => p.id !== parseInt(id)).slice(0, 5));
@@ -51,10 +51,10 @@ export default function Product() {
     }
     
     try {
-        await axios.post('http://localhost:5000/api/favorites/toggle', { product_id: product.id }, {
+        await axios.post('/api/favorites/toggle', { product_id: product.id }, {
             headers: { Authorization: `Bearer ${token}` }
         });
-        const res = await axios.get('http://localhost:5000/api/favorites', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await axios.get('/api/favorites', { headers: { Authorization: `Bearer ${token}` } });
         dispatch(setFavorites(res.data));
     } catch (err) {
         console.error("Pomylka:", err);

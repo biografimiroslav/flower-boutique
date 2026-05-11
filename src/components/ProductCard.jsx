@@ -17,10 +17,10 @@ export default function ProductCard({ product }) {
     }
     
     try {
-        await axios.post('http://localhost:5000/api/favorites/toggle', { product_id: product.id }, {
+        await axios.post('/api/favorites/toggle', { product_id: product.id }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const res = await axios.get('http://localhost:5000/api/favorites', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await axios.get('/api/favorites', { headers: { Authorization: `Bearer ${token}` } });
         dispatch(setFavorites(res.data));
     } catch (err) {
         if (err.response?.status === 422 || err.response?.status === 401) {

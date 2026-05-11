@@ -14,7 +14,7 @@ export default function SearchModal() {
   // Завантажуємо товари, коли модалка відкривається
   useEffect(() => {
     if (isOpen) {
-      axios.get('http://localhost:5000/api/products')
+      axios.get('/api/products')
         .then(res => setProducts(res.data))
         .catch(err => console.error(err));
       setQuery(''); // Очищаємо поле

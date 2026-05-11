@@ -13,7 +13,7 @@ export default function Favorites() {
 
   useEffect(() => {
     if (token) {
-        axios.get('http://localhost:5000/api/products').then(res => {
+        axios.get('/api/products').then(res => {
           const liked = res.data.filter(p => favorites.includes(p.id));
           setProducts(liked);
           setFiltered(liked);

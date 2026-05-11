@@ -42,7 +42,7 @@ export default function Checkout() {
     };
 
     try {
-      const res = await axios.post('http://localhost:5000/api/checkout', orderData);
+      const res = await axios.post('/api/checkout', orderData);
       if (res.data.success) {
         alert(`Замовлення прийнято! Менеджер зв'яжеться з вами для уточнення вартості доставки. 🌸`);
         dispatch(clearCart());

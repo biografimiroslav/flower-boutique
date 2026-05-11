@@ -16,7 +16,7 @@ export default function Catalog() {
   const max = parseInt(params.get('max')) || 15000;
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
+    axios.get('/api/products')
       .then(res => setProducts(res.data))
       .catch(err => console.error("Pomylka:", err));
   }, []);

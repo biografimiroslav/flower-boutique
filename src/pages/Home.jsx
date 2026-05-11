@@ -9,7 +9,7 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get('http://localhost:5000/api/products')
+    axios.get('/api/products')
       .then(res => setProducts(res.data))
       .catch(err => console.error("Pomylka:", err));
   }, []);
