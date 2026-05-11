@@ -30,8 +30,8 @@ export default function PriceSlider({ initialMin = 0, initialMax = 15000, onEnte
     else navigate(`/catalog?min=${min}&max=${max}`);
   };
 
-  const p1 = (min / 5000) * 100;
-  const p2 = (max / 5000) * 100;
+  const p1 = (min / 15000) * 100;
+  const p2 = (max / 15000) * 100;
 
   return (
     <div className="selectionByPriceForm" style={{ position: 'relative', width: '100%' }} ref={dropdownRef}>
