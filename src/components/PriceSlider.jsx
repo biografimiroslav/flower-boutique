@@ -41,8 +41,8 @@ export default function PriceSlider({ initialMin = 0, initialMax = 15000, onEnte
         <div className="price-slider-values">Від <span>{min}</span> до <span>{max}</span> грн</div>
         <div className="range-slider-container">
           <div className="slider-track" style={{ background: `linear-gradient(to right, #e0e0e0 ${p1}%, #c86b8e ${p1}%, #c86b8e ${p2}%, #e0e0e0 ${p2}%)` }}></div>
-          <input type="range" min="0" max="5000" value={min} onChange={handleMinChange} className="range-slider" />
-          <input type="range" min="0" max="5000" value={max} onChange={handleMaxChange} className="range-slider" />
+          <input type="range" min="0" max="15000" value={min} onChange={handleMinChange} className="range-slider" />
+          <input type="range" min="0" max="15000" value={max} onChange={handleMaxChange} className="range-slider" />
         </div>
       </div>
     </div>
