@@ -765,6 +765,7 @@ input, textarea {
 }
 
 @media screen and (max-width: 768px) {
+  
   .header { padding: 10px 15px; }
   .chooseLanguage { font-size: 13px; }
   .nav2 { gap: 8px; }
@@ -787,4 +788,32 @@ input, textarea {
   .footer { padding: 30px 15px; flex-direction: column; align-items: flex-start; text-align: left; gap: 30px; }
   .footerNav { flex-direction: column; gap: 25px; text-align: left; }
   .paySystemsImg { margin-left: 0; }
+  .storeFrontListButton {
+    padding: 8px 5px;
+    font-size: 12px;
+    white-space: nowrap;
+    gap: 4px;
+  }
+
+  .storeFrontListButton img {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+
+.storeFrontListButton {
+  border-radius: 2px;
+  background: #c86b8e;
+  color: #fff8fb;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin-top: 20px;
+  width: 100%;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 }

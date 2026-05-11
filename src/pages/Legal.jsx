@@ -70,7 +70,7 @@ export const Contacts = () => (
   <LegalContainer title="КОНТАКТНА ІНФОРМАЦІЯ">
     <div style={{ fontSize: '18px' }}>
       <p style={{ marginBottom: '10px' }}><strong>Повне найменування:</strong> Flower Boutique Uzhhorod</p>
-      <p style={{ marginBottom: '10px' }}><strong>ІПН:</strong> (Встав сюди свій ІПН / ЄДРПОУ)</p>
+      <p style={{ marginBottom: '10px' }}><strong>ІПН:</strong>2978120507</p>
       <p style={{ marginBottom: '10px' }}><strong>Юридична адреса:</strong> м. Ужгород, пл. Корятовича, 33</p>
       <p style={{ marginBottom: '10px' }}><strong>Фактичні адреси:</strong><br/> – м. Ужгород, пл. Дружби народів<br/> – м. Ужгород, пл. Корятовича, 33</p>
       
