@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { setAuth, setAuthModal, setAuthView, setTempData } from '../store/authSlice';
+import { Link } from 'react-router-dom';
 import '../styles/Auth.css';
 
 export default function AuthModals() {
@@ -11,6 +12,7 @@ export default function AuthModals() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', code: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   if (!isAuthModalOpen) return null;
 
@@ -18,11 +20,11 @@ export default function AuthModals() {
     dispatch(setAuthModal(false));
     setError('');
     setForm({ name: '', email: '', phone: '', password: '', code: '' });
+    setAgreed(false);
   };
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  // 1. ВХІД
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true); setError('');
@@ -36,13 +38,15 @@ export default function AuthModals() {
     setLoading(false);
   };
 
-  // 2. ВІДПРАВКА КОДУ (Реєстрація або Скидання)
   const handleSendCode = async (e, actionType) => {
     e.preventDefault();
+    if (actionType === 'register' && !agreed) {
+        return setError('Потрібно погодитися з політикою');
+    }
     setLoading(true); setError('');
     try {
       await axios.post('http://localhost:5000/api/send-code', { email: form.email, action: actionType });
-      dispatch(setTempData({ ...form })); // Зберігаємо введені дані
+      dispatch(setTempData({ ...form }));
       dispatch(setAuthView(actionType === 'register' ? 'register_code' : 'reset_code'));
       setForm({ ...form, code: '' });
     } catch (err) {
@@ -51,7 +55,6 @@ export default function AuthModals() {
     setLoading(false);
   };
 
-  // 3. ПІДТВЕРДЖЕННЯ РЕЄСТРАЦІЇ
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true); setError('');
@@ -65,7 +68,6 @@ export default function AuthModals() {
     setLoading(false);
   };
 
-  // 4. ПІДТВЕРДЖЕННЯ СКИДАННЯ ПАРОЛЯ
   const handleReset = async (e) => {
     e.preventDefault();
     setLoading(true); setError('');
@@ -106,6 +108,10 @@ export default function AuthModals() {
             <input name="email" type="email" placeholder="Email" required onChange={handleChange} />
             <input name="phone" type="tel" placeholder="Номер телефону" required onChange={handleChange} />
             <input name="password" type="password" placeholder="Придумайте пароль" required onChange={handleChange} />
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px', fontSize: '13px' }}>
+                <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} required style={{width: 'auto'}} />
+                <label>Я погоджуюсь з <Link to="/privacy" onClick={close} style={{color: '#c86b8e'}}>політикою конфіденційності</Link></label>
+            </div>
             <button type="submit" disabled={loading}>{loading ? 'Відправка...' : 'ОТРИМАТИ КОД НА ПОШТУ'}</button>
             <p className="auth-links"><span onClick={() => dispatch(setAuthView('login'))}>Вже є акаунт? Увійти</span></p>
           </form>
@@ -141,7 +147,6 @@ export default function AuthModals() {
             <button type="submit" disabled={loading}>{loading ? 'Перевірка...' : 'ЗБЕРЕГТИ ПАРОЛЬ'}</button>
           </form>
         )}
-
       </div>
     </div>
   );

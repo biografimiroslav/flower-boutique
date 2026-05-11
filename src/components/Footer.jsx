@@ -26,8 +26,11 @@ export default function Footer() {
         <li className="footerNavItem">
           <ul className="footerMenu">
             <li><p className="footerMenuBigText" style={{ marginBottom: '5px' }}>ДОДАТКОВО</p></li>
-            <li><a className="footerMenuSmallText" href="#">Умови повернення</a></li>
-            <li><a className="footerMenuSmallText" href="#">Оплата та доставка</a></li>
+            {/* ТУТ ТВОЇ НОВІ ПОСИЛАННЯ */}
+            <li><Link className="footerMenuSmallText" to="/privacy">Політика конфіденційності</Link></li>
+            <li><Link className="footerMenuSmallText" to="/terms">Умови використання</Link></li>
+            <li><Link className="footerMenuSmallText" to="/refund">Повернення коштів</Link></li>
+            <li><Link className="footerMenuSmallText" to="/contacts">Контактна інформація</Link></li>
             <li><img className="paySystemsImg" style={{ marginTop: '10px' }} src="/img/paySystems.svg" alt="Платіжні системи" /></li>
           </ul>
         </li>
