@@ -10,6 +10,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 import hmac
 import time
 import json
+import requests  # Додано для Telegram бота
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -21,20 +22,27 @@ jwt = JWTManager(app)
 SENDER_EMAIL = "flower.boutique.uzh@gmail.com" 
 SENDER_PASSWORD = "onnxfahbilcplado" 
 
+TELEGRAM_TOKEN = "8864433260:AAGMioRN2LA4grA_2ztJllW5C1mnyPYDrxU"
+ADMIN_CHAT_ID = "6895594698"
+
+def send_tg_admin(text):
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": ADMIN_CHAT_ID, "text": text, "parse_mode": "HTML"})
+    except Exception as e: 
+        print(f"Telegram Error: {e}")
+
 # --- ОБРОБНИКИ ПОМИЛОК JWT ---
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
-    print(f"!!! JWT ПОМИЛКА: {error}")
     return jsonify({"error": f"Invalid token: {error}"}), 422
 
 @jwt.unauthorized_loader
 def missing_token_callback(error):
-    print(f"!!! JWT ВІДСУТНІЙ: {error}")
     return jsonify({"error": "Missing token"}), 401
 
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_payload):
-    print(f"!!! JWT ПРОСТРОЧЕНИЙ !!!")
     return jsonify({"error": "Expired token"}), 401
 
 # --- БД І ПОШТА ---
@@ -55,7 +63,6 @@ def send_email(to_email, subject, body):
         server.quit()
         return True
     except Exception as e:
-        print(f"Email Error: {e}")
         return False
 
 @app.before_request
@@ -97,7 +104,6 @@ def register():
                        (data.get('name'), data.get('email'), data.get('phone'), pw))
         u_id = cursor.lastrowid
         conn.commit()
-        # ТУТ ВИПРАВЛЕНО: ПЕРЕДАЄМО ТІЛЬКИ ID ЯК РЯДОК
         token = create_access_token(identity=str(u_id))
         return jsonify({"success": True, "token": token, "user": {"id": u_id, "name": data.get('name'), "email": data.get('email'), 'phone': data.get('phone')}})
     except: return jsonify({"error": "Email zaynyatiy"}), 400
@@ -109,8 +115,7 @@ def reset_password():
     email = data.get('email')
     code = data.get('code')
     new_password = data.get('new_password')
-    conn = get_db()
-    cursor = conn.cursor()
+    conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT code FROM otp_codes WHERE email = ?', (email,))
     db_code = cursor.fetchone()
     if not db_code or db_code[0] != code:
@@ -119,8 +124,7 @@ def reset_password():
     hashed_password = generate_password_hash(new_password)
     cursor.execute('UPDATE users SET password_hash = ? WHERE email = ?', (hashed_password, email))
     cursor.execute('DELETE FROM otp_codes WHERE email = ?', (email,))
-    conn.commit()
-    conn.close()
+    conn.commit(); conn.close()
     return jsonify({"success": True})
 
 @app.route('/api/login', methods=['POST'])
@@ -132,7 +136,6 @@ def login():
     conn.close()
     if u and check_password_hash(u['password_hash'], data.get('password')):
         user_data = {"id": u['id'], "name": u['name'], "email": u['email'], "phone": u['phone']}
-        # ТУТ ВИПРАВЛЕНО: ПЕРЕДАЄМО ТІЛЬКИ ID ЯК РЯДОК
         token = create_access_token(identity=str(u['id']))
         return jsonify({"success": True, "token": token, "user": user_data})
     return jsonify({"error": "Dani nevirni"}), 401
@@ -141,7 +144,7 @@ def login():
 @app.route('/api/user/orders', methods=['GET'])
 @jwt_required()
 def get_user_orders():
-    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
+    uid = get_jwt_identity()
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', (uid,))
     orders = [dict(row) for row in cursor.fetchall()]
@@ -154,7 +157,7 @@ def get_user_orders():
 @app.route('/api/user/update', methods=['POST'])
 @jwt_required()
 def update_profile():
-    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
+    uid = get_jwt_identity()
     data = request.json
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('UPDATE users SET name=?, phone=? WHERE id=?', (data['name'], data['phone'], uid))
@@ -164,7 +167,7 @@ def update_profile():
 @app.route('/api/favorites', methods=['GET'])
 @jwt_required()
 def get_favorites():
-    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
+    uid = get_jwt_identity()
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT product_id FROM favorites WHERE user_id = ?', (uid,))
     favs = [row[0] for row in cursor.fetchall()]
@@ -174,7 +177,7 @@ def get_favorites():
 @app.route('/api/favorites/toggle', methods=['POST'])
 @jwt_required()
 def toggle_favorite():
-    uid = get_jwt_identity() # ТУТ ВИПРАВЛЕНО
+    uid = get_jwt_identity()
     pid = request.json.get('product_id')
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT * FROM favorites WHERE user_id=? AND product_id=?', (uid, pid))
@@ -206,9 +209,8 @@ def checkout():
     uid = data.get('user_id') 
     conn = get_db(); cursor = conn.cursor()
     
-    # Використовуємо float для ціни, щоб 1 грн або 1.50 працювали коректно
     total_sum = sum(float(i['price']) * int(i['qty']) for i in data['cart'])
-    total_str = str(int(total_sum)) # WFP любить цілі числа або формат 1.00
+    total_str = str(int(total_sum))
 
     cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, status, date) VALUES (?,?,?,?,?,?,?,?,?)',
                    (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
@@ -227,7 +229,6 @@ def checkout():
     counts = [str(i['qty']) for i in data['cart']]
     prices = [str(int(float(i['price']))) for i in data['cart']]
 
-    # Важливо: serviceUrl - це куди WFP пришле підтвердження для відправки листа
     sign_str = ";".join([merchant, "flower-boutique.com.ua", ref, date, total_str, "UAH"] + names + counts + prices)
     sign = hmac.new(secret.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
 
@@ -249,8 +250,6 @@ def checkout():
         }
     })
 
-
-# НОВИЙ ЕНДПОІНТ ДЛЯ ПІДТВЕРДЖЕННЯ ТА ЛИСТА
 @app.route('/api/payment-callback', methods=['POST'])
 def payment_callback():
     data = json.loads(request.data)
@@ -261,7 +260,6 @@ def payment_callback():
         conn = get_db(); cursor = conn.cursor()
         cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (ref,))
         
-        # Беремо дані для листа
         cursor.execute('SELECT email, total FROM orders WHERE id = ?', (ref,))
         order = cursor.fetchone()
         cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (ref,))
@@ -278,11 +276,12 @@ def payment_callback():
             <p>Ми вже готуємо ваші квіти!</p>
             """
             send_email(order['email'], f"Замовлення №{ref} оплачено", body)
+            
+            # Відправка сповіщення в Telegram
+            msg = f"💰 <b>НОВА ОПЛАТА!</b>\nЗамовлення: #{ref}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
+            send_tg_admin(msg)
 
-    # Відповідь для WayForPay (обов'язково)
     return jsonify({"orderReference": ref, "status": "accept", "time": int(time.time())})
-
-from flask import redirect
 
 @app.route('/api/payment-redirect', methods=['POST', 'GET'])
 def payment_redirect():
@@ -294,45 +293,6 @@ def payment_redirect():
     <body><script>window.location.href = "/payment-status?orderReference={order_ref}";</script></body>
     </html>
     """
-
-
-
-
-
-
-
-
-
-
-
-
-import requests # Додай в імпорти зверху
-
-TELEGRAM_TOKEN = "8864433260:AAGMioRN2LA4grA_2ztJllW5C1mnyPYDrxU"
-ADMIN_CHAT_ID = "6895594698"
-
-def send_tg_admin(text):
-    try:
-        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-        requests.post(url, json={"chat_id": ADMIN_CHAT_ID, "text": text, "parse_mode": "HTML"})
-    except: pass
-
-# У функції payment_callback (там де status == 'Approved'):
-if status == 'Approved':
-    # ... твій код оновлення БД ...
-    msg = f"💰 <b>НОВА ОПЛАТА!</b>\nЗамовлення: #{ref}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
-    send_tg_admin(msg)
-
-
-
-
-
-
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')
