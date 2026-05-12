@@ -283,14 +283,9 @@ def payment_callback():
     return jsonify({"orderReference": ref, "status": "accept", "time": int(time.time())})
 
 from flask import redirect
-
 @app.route('/api/payment-redirect', methods=['POST', 'GET'])
 def payment_redirect():
-    # WayForPay передає дані форми через POST
     order_ref = request.form.get('orderReference', '')
-    if not order_ref:
-        order_ref = request.args.get('orderReference', '')
-        
     return f"""
     <!DOCTYPE html>
     <html>

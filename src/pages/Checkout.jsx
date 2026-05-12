@@ -57,7 +57,7 @@ export default function Checkout() {
           form.appendChild(input);
         };
 
-        // ТУТ КЛЮЧОВИЙ ФІКС: БЕРЕМО ВСІ ДАНІ З БЕКЕНДУ, НІЧОГО НЕ ПИШЕМО ВРУЧНУ
+        // БЕРЕМО ВСІ ПАРАМЕТРИ З БЕКЕНДУ (включаючи правильний returnUrl)
         Object.keys(wfp).forEach(key => {
           if (Array.isArray(wfp[key])) {
             wfp[key].forEach(val => addInput(key + '[]', val));
