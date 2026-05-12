@@ -24,9 +24,9 @@ export default function Checkout() {
 
   const [agreed, setAgreed] = useState(false);
 
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+  const total = items.reduce((sum, i) => sum + Number(i.price) * i.qty, 0);
 
-const handleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return alert("Кошик порожній!");
     if (!agreed) return alert("Погодьтеся з умовами!");
@@ -57,18 +57,13 @@ const handleSubmit = async (e) => {
           form.appendChild(input);
         };
 
-        addInput('merchantAccount', wfp.merchantAccount);
-        addInput('merchantDomainName', wfp.merchantDomainName);
-        addInput('orderReference', wfp.orderReference);
-        addInput('orderDate', wfp.orderDate);
-        addInput('amount', wfp.amount);
-        addInput('currency', wfp.currency);
-        addInput('merchantSignature', wfp.merchantSignature);
-        addInput('returnUrl', 'https://flower-boutique.com.ua');
-
-        wfp.productName.forEach(n => addInput('productName[]', n));
-        wfp.productPrice.forEach(p => addInput('productPrice[]', p));
-        wfp.productCount.forEach(c => addInput('productCount[]', c));
+        Object.keys(wfp).forEach(key => {
+          if (Array.isArray(wfp[key])) {
+            wfp[key].forEach(val => addInput(key + '[]', val));
+          } else {
+            addInput(key, wfp[key]);
+          }
+        });
 
         document.body.appendChild(form);
         dispatch(clearCart());

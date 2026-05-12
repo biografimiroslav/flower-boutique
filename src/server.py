@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import hmac
 import time
+import json
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -203,47 +204,83 @@ def checkout():
     data = request.json
     cust = data.get('customer')
     uid = data.get('user_id') 
-    conn = get_db()
-    cursor = conn.cursor()
-    total_sum = sum(i['price']*i['qty'] for i in data['cart'])
+    conn = get_db(); cursor = conn.cursor()
     
-    cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, date) VALUES (?,?,?,?,?,?,?,?)',
+    # Використовуємо float для ціни, щоб 1 грн або 1.50 працювали коректно
+    total_sum = sum(float(i['price']) * int(i['qty']) for i in data['cart'])
+    total_str = str(int(total_sum)) # WFP любить цілі числа або формат 1.00
+
+    cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, status, date) VALUES (?,?,?,?,?,?,?,?,?)',
                    (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
-                    total_sum, datetime.now().strftime("%Y-%m-%d %H:%M")))
+                    total_sum, 'Ochikuye oplaty', datetime.now().strftime("%Y-%m-%d %H:%M")))
     oid = cursor.lastrowid
     for i in data['cart']: 
-        cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', (oid, i['id'], i['name'], i['qty'], i['price']))
-    conn.commit()
-    conn.close()
+        cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', 
+                       (oid, i['id'], i['name'], i['qty'], i['price']))
+    conn.commit(); conn.close()
 
     merchant = "biografimiroslav_github_io1"
     secret = "22cbf04e64fdf2b1b4b6838668885c1ad5bbba91"
     ref = str(oid)
     date = str(int(time.time()))
-    amount = str(total_sum)
     names = [i['name'] for i in data['cart']]
     counts = [str(i['qty']) for i in data['cart']]
-    prices = [str(i['price']) for i in data['cart']]
+    prices = [str(int(float(i['price']))) for i in data['cart']]
 
-    sign_str = ";".join([merchant, "flower-boutique.com.ua", ref, date, amount, "UAH"] + names + counts + prices)
+    # Важливо: serviceUrl - це куди WFP пришле підтвердження для відправки листа
+    sign_str = ";".join([merchant, "flower-boutique.com.ua", ref, date, total_str, "UAH"] + names + counts + prices)
     sign = hmac.new(secret.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
 
     return jsonify({
         "success": True, 
-        "order_id": oid,
         "wfp": {
             "merchantAccount": merchant,
             "merchantDomainName": "flower-boutique.com.ua",
             "orderReference": ref,
             "orderDate": date,
-            "amount": amount,
+            "amount": total_str,
             "currency": "UAH",
             "merchantSignature": sign,
             "productName": names,
             "productPrice": prices,
-            "productCount": counts
+            "productCount": counts,
+            "serviceUrl": "https://flower-boutique.com.ua/api/payment-callback",
+            "returnUrl": "https://flower-boutique.com.ua/payment-status"
         }
     })
+
+
+# НОВИЙ ЕНДПОІНТ ДЛЯ ПІДТВЕРДЖЕННЯ ТА ЛИСТА
+@app.route('/api/payment-callback', methods=['POST'])
+def payment_callback():
+    data = json.loads(request.data)
+    ref = data.get('orderReference')
+    status = data.get('transactionStatus')
+    
+    if status == 'Approved':
+        conn = get_db(); cursor = conn.cursor()
+        cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (ref,))
+        
+        # Беремо дані для листа
+        cursor.execute('SELECT email, total FROM orders WHERE id = ?', (ref,))
+        order = cursor.fetchone()
+        cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (ref,))
+        items = cursor.fetchall()
+        conn.commit(); conn.close()
+
+        if order and order['email']:
+            items_text = "".join([f"<li>{i['product_name']} x {i['qty']}</li>" for i in items])
+            body = f"""
+            <h2>Дякуємо за замовлення №{ref}! 🌸</h2>
+            <p>Ваше замовлення успішно оплачено.</p>
+            <ul>{items_text}</ul>
+            <p><b>Сума: {order['total']} грн</b></p>
+            <p>Ми вже готуємо ваші квіти!</p>
+            """
+            send_email(order['email'], f"Замовлення №{ref} оплачено", body)
+
+    # Відповідь для WayForPay (обов'язково)
+    return jsonify({"orderReference": ref, "status": "accept", "time": int(time.time())})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')
