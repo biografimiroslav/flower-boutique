@@ -10,7 +10,7 @@ import Checkout from './pages/Checkout';
 import Profile from './pages/Profile';
 import Favorites from './pages/Favorites';
 import AuthModals from './components/AuthModals';
-import PaymentStatus from './pages/PaymentStatus'; // ДОДАЛИ ІМПОРТ
+import PaymentStatus from './pages/PaymentStatus'; 
 import { PrivacyPolicy, Terms, RefundPolicy, Contacts } from './pages/Legal';
 
 export default function App() {
@@ -28,8 +28,6 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/refund" element={<RefundPolicy />} />
         <Route path="/contacts" element={<Contacts />} />
-        
-        {/* ДОДАЛИ НОВИЙ РОУТ ДЛЯ СТАТУСУ ОПЛАТИ */}
         <Route path="/payment-status" element={<PaymentStatus />} />
       </Routes>
       <Footer />

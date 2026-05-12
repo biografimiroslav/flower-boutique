@@ -23,6 +23,7 @@ def init_db():
         address TEXT, 
         comment TEXT, 
         total INTEGER, 
+        status TEXT DEFAULT 'Ochikuye oplaty',
         date TEXT
     )''')
 

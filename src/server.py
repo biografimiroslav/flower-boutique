@@ -283,20 +283,56 @@ def payment_callback():
     return jsonify({"orderReference": ref, "status": "accept", "time": int(time.time())})
 
 from flask import redirect
+
 @app.route('/api/payment-redirect', methods=['POST', 'GET'])
 def payment_redirect():
     order_ref = request.form.get('orderReference', '')
+    if not order_ref: order_ref = request.args.get('orderReference', '')
     return f"""
-    <!DOCTYPE html>
     <html>
-    <head>
-        <meta http-equiv="refresh" content="0; url=/payment-status?orderReference={order_ref}" />
-    </head>
-    <body>
-        <script>window.location.href = "/payment-status?orderReference={order_ref}";</script>
-    </body>
+    <head><meta http-equiv="refresh" content="0; url=/payment-status?orderReference={order_ref}" /></head>
+    <body><script>window.location.href = "/payment-status?orderReference={order_ref}";</script></body>
     </html>
     """
+
+
+
+
+
+
+
+
+
+
+
+
+import requests # Додай в імпорти зверху
+
+TELEGRAM_TOKEN = "8864433260:AAGMioRN2LA4grA_2ztJllW5C1mnyPYDrxU"
+ADMIN_CHAT_ID = "6895594698"
+
+def send_tg_admin(text):
+    try:
+        url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": ADMIN_CHAT_ID, "text": text, "parse_mode": "HTML"})
+    except: pass
+
+# У функції payment_callback (там де status == 'Approved'):
+if status == 'Approved':
+    # ... твій код оновлення БД ...
+    msg = f"💰 <b>НОВА ОПЛАТА!</b>\nЗамовлення: #{ref}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
+    send_tg_admin(msg)
+
+
+
+
+
+
+
+
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')
