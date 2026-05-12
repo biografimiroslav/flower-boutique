@@ -7,6 +7,8 @@ from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import hmac
+import time
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -201,14 +203,47 @@ def checkout():
     data = request.json
     cust = data.get('customer')
     uid = data.get('user_id') 
-    conn = get_db(); cursor = conn.cursor()
+    conn = get_db()
+    cursor = conn.cursor()
+    total_sum = sum(i['price']*i['qty'] for i in data['cart'])
+    
     cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, date) VALUES (?,?,?,?,?,?,?,?)',
                    (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
-                    sum(i['price']*i['qty'] for i in data['cart']), datetime.now().strftime("%Y-%m-%d %H:%M")))
+                    total_sum, datetime.now().strftime("%Y-%m-%d %H:%M")))
     oid = cursor.lastrowid
-    for i in data['cart']: cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', (oid, i['id'], i['name'], i['qty'], i['price']))
-    conn.commit(); conn.close()
-    return jsonify({"success": True, "order_id": oid})
+    for i in data['cart']: 
+        cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', (oid, i['id'], i['name'], i['qty'], i['price']))
+    conn.commit()
+    conn.close()
+
+    merchant = "biografimiroslav_github_io1"
+    secret = "22cbf04e64fdf2b1b4b6838668885c1ad5bbba91"
+    ref = str(oid)
+    date = str(int(time.time()))
+    amount = str(total_sum)
+    names = [i['name'] for i in data['cart']]
+    counts = [str(i['qty']) for i in data['cart']]
+    prices = [str(i['price']) for i in data['cart']]
+
+    sign_str = ";".join([merchant, "flower-boutique.com.ua", ref, date, amount, "UAH"] + names + counts + prices)
+    sign = hmac.new(secret.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
+
+    return jsonify({
+        "success": True, 
+        "order_id": oid,
+        "wfp": {
+            "merchantAccount": merchant,
+            "merchantDomainName": "flower-boutique.com.ua",
+            "orderReference": ref,
+            "orderDate": date,
+            "amount": amount,
+            "currency": "UAH",
+            "merchantSignature": sign,
+            "productName": names,
+            "productPrice": prices,
+            "productCount": counts
+        }
+    })
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')

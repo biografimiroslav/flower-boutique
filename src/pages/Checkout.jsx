@@ -26,7 +26,7 @@ export default function Checkout() {
 
   const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     if (items.length === 0) return alert("Кошик порожній!");
     if (!agreed) return alert("Погодьтеся з умовами!");
@@ -42,11 +42,37 @@ export default function Checkout() {
     };
 
     try {
-      const res = await axios.post('/api/checkout', orderData);
+      const res = await axios.post(import.meta.env.VITE_API_URL + '/checkout', orderData);
       if (res.data.success) {
-        alert(`Замовлення прийнято! Менеджер зв'яжеться з вами для уточнення вартості доставки. 🌸`);
+        const wfp = res.data.wfp;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://secure.wayforpay.com/pay';
+
+        const addInput = (name, value) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = name;
+          input.value = value;
+          form.appendChild(input);
+        };
+
+        addInput('merchantAccount', wfp.merchantAccount);
+        addInput('merchantDomainName', wfp.merchantDomainName);
+        addInput('orderReference', wfp.orderReference);
+        addInput('orderDate', wfp.orderDate);
+        addInput('amount', wfp.amount);
+        addInput('currency', wfp.currency);
+        addInput('merchantSignature', wfp.merchantSignature);
+        addInput('returnUrl', 'https://flower-boutique.com.ua');
+
+        wfp.productName.forEach(n => addInput('productName[]', n));
+        wfp.productPrice.forEach(p => addInput('productPrice[]', p));
+        wfp.productCount.forEach(c => addInput('productCount[]', c));
+
+        document.body.appendChild(form);
         dispatch(clearCart());
-        navigate('/');
+        form.submit();
       }
     } catch (err) {
       alert("Помилка. Спробуйте ще раз.");
