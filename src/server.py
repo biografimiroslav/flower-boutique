@@ -245,7 +245,7 @@ def checkout():
             "productPrice": prices,
             "productCount": counts,
             "serviceUrl": "https://flower-boutique.com.ua/api/payment-callback",
-            "returnUrl": "https://flower-boutique.com.ua/payment-status"
+            "returnUrl": "https://flower-boutique.com.ua/api/payment-redirect"
         }
     })
 
@@ -282,5 +282,20 @@ def payment_callback():
     # Відповідь для WayForPay (обов'язково)
     return jsonify({"orderReference": ref, "status": "accept", "time": int(time.time())})
 
+from flask import redirect
+
+@app.route('/api/payment-redirect', methods=['POST', 'GET'])
+def payment_redirect():
+    return """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta http-equiv="refresh" content="0; url=/payment-status" />
+    </head>
+    <body>
+        <script>window.location.href = "/payment-status";</script>
+    </body>
+    </html>
+    """
 if __name__ == '__main__':
     app.run(debug=True, port=5000, host='0.0.0.0')
