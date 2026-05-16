@@ -10,11 +10,12 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 import hmac
 import time
 import json
-import requests  # Додано для Telegram бота
+import requests
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
+# --- ХАРДКОД КЛЮЧІВ ТА НАЛАШТУВАНЬ ---
 app.config['JWT_SECRET_KEY'] = 'slavik-super-secret-key-2026-flower-boutique-pro'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(days=30)
 jwt = JWTManager(app)
@@ -24,6 +25,11 @@ SENDER_PASSWORD = "onnxfahbilcplado"
 
 TELEGRAM_TOKEN = "8864433260:AAGMioRN2LA4grA_2ztJllW5C1mnyPYDrxU"
 ADMIN_CHAT_ID = "6895594698"
+
+WFP_MERCHANT = "biografimiroslav_github_io1"
+WFP_SECRET = "22cbf04e64fdf2b1b4b6838668885c1ad5bbba91"
+DOMAIN_NAME = "flower-boutique.com.ua"
+# -------------------------------------
 
 def send_tg_admin(text):
     try:
@@ -82,14 +88,14 @@ def send_code():
     conn = get_db(); cursor = conn.cursor()
     if action == 'reset':
         cursor.execute('SELECT id FROM users WHERE email = ?', (email,))
-        if not cursor.fetchone(): return jsonify({"error": "Email ne znaydeno"}), 404
+        if not cursor.fetchone(): return jsonify({"error": "Email не знайдено"}), 404
     code = str(random.randint(1000, 9999))
     cursor.execute('DELETE FROM otp_codes WHERE email = ?', (email,))
     cursor.execute('INSERT INTO otp_codes (email, code) VALUES (?, ?)', (email, code))
     conn.commit(); conn.close()
-    if send_email(email, "Kod pidtverdzhennya", f"<h1>Vash kod: {code}</h1>"):
+    if send_email(email, "Код підтвердження", f"<h1>Ваш код: {code}</h1>"):
         return jsonify({"success": True})
-    return jsonify({"error": "Pomylka poshty"}), 500
+    return jsonify({"error": "Помилка пошти"}), 500
 
 @app.route('/api/register', methods=['POST'])
 def register():
@@ -97,7 +103,7 @@ def register():
     conn = get_db(); cursor = conn.cursor()
     cursor.execute('SELECT code FROM otp_codes WHERE email = ?', (data.get('email'),))
     db_code = cursor.fetchone()
-    if not db_code or db_code[0] != data.get('code'): return jsonify({"error": "Kod nevirnyi"}), 400
+    if not db_code or db_code[0] != data.get('code'): return jsonify({"error": "Код невірний"}), 400
     try:
         pw = generate_password_hash(data.get('password'))
         cursor.execute('INSERT INTO users (name, email, phone, password_hash) VALUES (?,?,?,?)', 
@@ -106,7 +112,7 @@ def register():
         conn.commit()
         token = create_access_token(identity=str(u_id))
         return jsonify({"success": True, "token": token, "user": {"id": u_id, "name": data.get('name'), "email": data.get('email'), 'phone': data.get('phone')}})
-    except: return jsonify({"error": "Email zaynyatiy"}), 400
+    except: return jsonify({"error": "Email вже зайнятий"}), 400
     finally: conn.close()
 
 @app.route('/api/reset-password', methods=['POST'])
@@ -120,7 +126,7 @@ def reset_password():
     db_code = cursor.fetchone()
     if not db_code or db_code[0] != code:
         conn.close()
-        return jsonify({"error": "Nevirnyi kod"}), 400
+        return jsonify({"error": "Невірний код"}), 400
     hashed_password = generate_password_hash(new_password)
     cursor.execute('UPDATE users SET password_hash = ? WHERE email = ?', (hashed_password, email))
     cursor.execute('DELETE FROM otp_codes WHERE email = ?', (email,))
@@ -138,7 +144,7 @@ def login():
         user_data = {"id": u['id'], "name": u['name'], "email": u['email'], "phone": u['phone']}
         token = create_access_token(identity=str(u['id']))
         return jsonify({"success": True, "token": token, "user": user_data})
-    return jsonify({"error": "Dani nevirni"}), 401
+    return jsonify({"error": "Дані невірні"}), 401
 
 # --- КОРИСТУВАЧ І УЛЮБЛЕНЕ ---
 @app.route('/api/user/orders', methods=['GET'])
@@ -200,43 +206,70 @@ def get_product(pid):
     cursor.execute('SELECT * FROM products WHERE id=?', (pid,))
     r = cursor.fetchone(); conn.close()
     if r: return jsonify(dict(r))
-    return jsonify({"error": "Tovar ne znaydeno"}), 404
+    return jsonify({"error": "Товар не знайдено"}), 404
 
 @app.route('/api/checkout', methods=['POST'])
 def checkout():
     data = request.json
     cust = data.get('customer')
-    uid = data.get('user_id') 
+    uid = data.get('user_id')
+    cart_items = data.get('cart', [])
+    
     conn = get_db(); cursor = conn.cursor()
     
-    total_sum = sum(float(i['price']) * int(i['qty']) for i in data['cart'])
+    # 1. ЗАХИСТ: Розраховуємо ціни на сервері з БД
+    total_sum = 0
+    validated_items = []
+    names = []
+    counts = []
+    prices = []
+    
+    for item in cart_items:
+        cursor.execute('SELECT name, price FROM products WHERE id = ?', (item['id'],))
+        db_prod = cursor.fetchone()
+        if db_prod:
+            real_price = int(db_prod['price'])
+            qty = int(item['qty'])
+            total_sum += real_price * qty
+            
+            validated_items.append({
+                'id': item['id'],
+                'name': db_prod['name'],
+                'qty': qty,
+                'price': real_price
+            })
+            names.append(db_prod['name'])
+            counts.append(str(qty))
+            prices.append(str(real_price))
+            
+    if not validated_items:
+        conn.close()
+        return jsonify({"error": "Кошик порожній або товари не знайдені"}), 400
+
     total_str = str(int(total_sum))
 
     cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, status, date) VALUES (?,?,?,?,?,?,?,?,?)',
                    (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
                     total_sum, 'Ochikuye oplaty', datetime.now().strftime("%Y-%m-%d %H:%M")))
     oid = cursor.lastrowid
-    for i in data['cart']: 
+    
+    for i in validated_items: 
         cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', 
                        (oid, i['id'], i['name'], i['qty'], i['price']))
     conn.commit(); conn.close()
 
-    merchant = "biografimiroslav_github_io1"
-    secret = "22cbf04e64fdf2b1b4b6838668885c1ad5bbba91"
     ref = str(oid)
     date = str(int(time.time()))
-    names = [i['name'] for i in data['cart']]
-    counts = [str(i['qty']) for i in data['cart']]
-    prices = [str(int(float(i['price']))) for i in data['cart']]
 
-    sign_str = ";".join([merchant, "flower-boutique.com.ua", ref, date, total_str, "UAH"] + names + counts + prices)
-    sign = hmac.new(secret.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
+    # Генерація підпису
+    sign_str = ";".join([WFP_MERCHANT, DOMAIN_NAME, ref, date, total_str, "UAH"] + names + counts + prices)
+    sign = hmac.new(WFP_SECRET.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
 
     return jsonify({
         "success": True, 
         "wfp": {
-            "merchantAccount": merchant,
-            "merchantDomainName": "flower-boutique.com.ua",
+            "merchantAccount": WFP_MERCHANT,
+            "merchantDomainName": DOMAIN_NAME,
             "orderReference": ref,
             "orderDate": date,
             "amount": total_str,
@@ -245,43 +278,76 @@ def checkout():
             "productName": names,
             "productPrice": prices,
             "productCount": counts,
-            "serviceUrl": "https://flower-boutique.com.ua/api/payment-callback",
-            "returnUrl": "https://flower-boutique.com.ua/api/payment-redirect"
+            "serviceUrl": f"https://{DOMAIN_NAME}/api/payment-callback",
+            "returnUrl": f"https://{DOMAIN_NAME}/api/payment-redirect"
         }
     })
 
 @app.route('/api/payment-callback', methods=['POST'])
 def payment_callback():
     data = json.loads(request.data)
+    
+    # 2. ЗАХИСТ: Перевірка підпису від WayForPay
+    wfp_sign = data.get('merchantSignature', '')
+    sign_fields = [
+        str(data.get('merchantAccount', '')),
+        str(data.get('orderReference', '')),
+        str(data.get('amount', '')),
+        str(data.get('currency', '')),
+        str(data.get('authCode', '')),
+        str(data.get('cardPan', '')),
+        str(data.get('transactionStatus', '')),
+        str(data.get('reasonCode', ''))
+    ]
+    sign_str = ";".join(sign_fields)
+    expected_sign = hmac.new(WFP_SECRET.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
+    
+    if wfp_sign != expected_sign:
+        return jsonify({"error": "Invalid signature"}), 403
+
     ref = data.get('orderReference')
     status = data.get('transactionStatus')
     
     if status == 'Approved':
         conn = get_db(); cursor = conn.cursor()
-        cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (ref,))
         
-        cursor.execute('SELECT email, total FROM orders WHERE id = ?', (ref,))
+        # Захист від дублів callback
+        cursor.execute('SELECT status, email, total FROM orders WHERE id = ?', (ref,))
         order = cursor.fetchone()
-        cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (ref,))
-        items = cursor.fetchall()
-        conn.commit(); conn.close()
+        
+        if order and order['status'] != 'Oplacheno':
+            cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (ref,))
+            cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (ref,))
+            items = cursor.fetchall()
+            conn.commit()
 
-        if order and order['email']:
-            items_text = "".join([f"<li>{i['product_name']} x {i['qty']}</li>" for i in items])
-            body = f"""
-            <h2>Дякуємо за замовлення №{ref}! 🌸</h2>
-            <p>Ваше замовлення успішно оплачено.</p>
-            <ul>{items_text}</ul>
-            <p><b>Сума: {order['total']} грн</b></p>
-            <p>Ми вже готуємо ваші квіти!</p>
-            """
-            send_email(order['email'], f"Замовлення №{ref} оплачено", body)
-            
-            # Відправка сповіщення в Telegram
+            if order['email']:
+                items_text = "".join([f"<li>{i['product_name']} x {i['qty']}</li>" for i in items])
+                body = f"""
+                <h2>Дякуємо за замовлення №{ref}! 🌸</h2>
+                <p>Ваше замовлення успішно оплачено.</p>
+                <ul>{items_text}</ul>
+                <p><b>Сума: {order['total']} грн</b></p>
+                <p>Ми вже готуємо ваші квіти!</p>
+                """
+                send_email(order['email'], f"Замовлення №{ref} оплачено", body)
+                
             msg = f"💰 <b>НОВА ОПЛАТА!</b>\nЗамовлення: #{ref}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
             send_tg_admin(msg)
+            
+        conn.close()
 
-    return jsonify({"orderReference": ref, "status": "accept", "time": int(time.time())})
+    # 3. ЗАХИСТ: Формування правильної відповіді з підписом для WayForPay
+    resp_time = int(time.time())
+    resp_sign_str = f"{ref};accept;{resp_time}"
+    resp_sign = hmac.new(WFP_SECRET.encode('utf-8'), resp_sign_str.encode('utf-8'), 'md5').hexdigest()
+
+    return jsonify({
+        "orderReference": ref, 
+        "status": "accept", 
+        "time": resp_time,
+        "signature": resp_sign
+    })
 
 @app.route('/api/payment-redirect', methods=['POST', 'GET'])
 def payment_redirect():
