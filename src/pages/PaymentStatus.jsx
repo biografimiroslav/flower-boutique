@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { clearCart } from '../store/cartSlice';
 import axios from 'axios';
 
 export default function PaymentStatus() {
@@ -7,6 +9,7 @@ export default function PaymentStatus() {
   const orderReference = searchParams.get('orderReference');
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'failed'
   const [orderInfo, setOrderInfo] = useState(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!orderReference) {
@@ -19,10 +22,11 @@ export default function PaymentStatus() {
 
     const fetchStatus = async () => {
       try {
-        const res = await axios.get(`/api/orders/status/${orderReference}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders/status/${orderReference}`);
         if (res.data.success && res.data.status === 'Oplacheno') {
           setOrderInfo(res.data);
           setStatus('success');
+          dispatch(clearCart()); // Очищаємо кошик тільки після офіційного підтвердження оплати
         } else {
           attempts++;
           if (attempts < maxAttempts) {
@@ -39,7 +43,7 @@ export default function PaymentStatus() {
     };
 
     fetchStatus();
-  }, [orderReference]);
+  }, [orderReference, dispatch]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcf9f9] px-4 font-sans">

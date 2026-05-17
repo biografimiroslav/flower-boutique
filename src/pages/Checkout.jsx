@@ -67,7 +67,7 @@ export default function Checkout() {
         });
 
         document.body.appendChild(form);
-        dispatch(clearCart());
+        // dispatch(clearCart());
         form.submit();
       }
     } catch (err) {
