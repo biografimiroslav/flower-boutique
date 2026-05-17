@@ -217,7 +217,6 @@ def checkout():
     
     conn = get_db(); cursor = conn.cursor()
     
-    # 1. ЗАХИСТ: Розраховуємо ціни на сервері з БД
     total_sum = 0
     validated_items = []
     names = []
@@ -258,10 +257,9 @@ def checkout():
                        (oid, i['id'], i['name'], i['qty'], i['price']))
     conn.commit(); conn.close()
 
-    ref = str(oid)
     date = str(int(time.time()))
+    ref = f"{oid}_{date}"
 
-    # Генерація підпису
     sign_str = ";".join([WFP_MERCHANT, DOMAIN_NAME, ref, date, total_str, "UAH"] + names + counts + prices)
     sign = hmac.new(WFP_SECRET.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
 
@@ -285,9 +283,18 @@ def checkout():
 
 @app.route('/api/payment-callback', methods=['POST'])
 def payment_callback():
-    data = json.loads(request.data)
-    
-    # 2. ЗАХИСТ: Перевірка підпису від WayForPay
+    data = request.get_json(force=True, silent=True)
+    if not data:
+        data = request.form.to_dict()
+    if not data and request.data:
+        try:
+            data = json.loads(request.data.decode('utf-8'))
+        except Exception:
+            pass
+            
+    if not data:
+        return jsonify({"error": "Empty payload"}), 400
+
     wfp_sign = data.get('merchantSignature', '')
     sign_fields = [
         str(data.get('merchantAccount', '')),
@@ -305,39 +312,43 @@ def payment_callback():
     if wfp_sign != expected_sign:
         return jsonify({"error": "Invalid signature"}), 403
 
-    ref = data.get('orderReference')
-    status = data.get('transactionStatus')
+    ref = data.get('orderReference', '')
+    status = data.get('transactionStatus', '')
+    
+    try:
+        raw_id = ref.split('_')[0] if '_' in ref else ref
+        actual_oid = int(raw_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Invalid order reference format"}), 400
     
     if status == 'Approved':
         conn = get_db(); cursor = conn.cursor()
         
-        # Захист від дублів callback
-        cursor.execute('SELECT status, email, total FROM orders WHERE id = ?', (ref,))
+        cursor.execute('SELECT status, email, total FROM orders WHERE id = ?', (actual_oid,))
         order = cursor.fetchone()
         
         if order and order['status'] != 'Oplacheno':
-            cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (ref,))
-            cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (ref,))
+            cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (actual_oid,))
+            cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (actual_oid,))
             items = cursor.fetchall()
             conn.commit()
 
             if order['email']:
                 items_text = "".join([f"<li>{i['product_name']} x {i['qty']}</li>" for i in items])
                 body = f"""
-                <h2>Дякуємо за замовлення №{ref}! 🌸</h2>
+                <h2>Дякуємо за замовлення №{actual_oid}! 🌸</h2>
                 <p>Ваше замовлення успішно оплачено.</p>
                 <ul>{items_text}</ul>
                 <p><b>Сума: {order['total']} грн</b></p>
                 <p>Ми вже готуємо ваші квіти!</p>
                 """
-                send_email(order['email'], f"Замовлення №{ref} оплачено", body)
+                send_email(order['email'], f"Замовлення №{actual_oid} оплачено", body)
                 
-            msg = f"💰 <b>НОВА ОПЛАТА!</b>\nЗамовлення: #{ref}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
+            msg = f"💰 <b>НОВА ОПЛАТА!</b>\nЗамовлення: #{actual_oid}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
             send_tg_admin(msg)
             
         conn.close()
 
-    # 3. ЗАХИСТ: Формування правильної відповіді з підписом для WayForPay
     resp_time = int(time.time())
     resp_sign_str = f"{ref};accept;{resp_time}"
     resp_sign = hmac.new(WFP_SECRET.encode('utf-8'), resp_sign_str.encode('utf-8'), 'md5').hexdigest()
@@ -349,14 +360,34 @@ def payment_callback():
         "signature": resp_sign
     })
 
+@app.route('/api/orders/status/<string:oid>', methods=['GET'])
+def get_order_status(oid):
+    try:
+        raw_id = oid.split('_')[0] if '_' in oid else oid
+        actual_oid = int(raw_id)
+    except (ValueError, TypeError):
+        return jsonify({"error": "Невірний формат ID замовлення"}), 400
+
+    conn = get_db(); cursor = conn.cursor()
+    cursor.execute('SELECT status, total FROM orders WHERE id = ?', (actual_oid,))
+    order = cursor.fetchone()
+    conn.close()
+    
+    if order:
+        return jsonify({"success": True, "status": order['status'], "total": order['total']})
+    return jsonify({"error": "Замовлення не знайдено"}), 404
+
 @app.route('/api/payment-redirect', methods=['POST', 'GET'])
 def payment_redirect():
     order_ref = request.form.get('orderReference', '')
     if not order_ref: order_ref = request.args.get('orderReference', '')
+    
+    actual_oid = order_ref.split('_')[0] if '_' in order_ref else order_ref
+    
     return f"""
     <html>
-    <head><meta http-equiv="refresh" content="0; url=/payment-status?orderReference={order_ref}" /></head>
-    <body><script>window.location.href = "/payment-status?orderReference={order_ref}";</script></body>
+    <head><meta http-equiv="refresh" content="0; url=/payment-status?orderReference={actual_oid}" /></head>
+    <body><script>window.location.href = "/payment-status?orderReference={actual_oid}";</script></body>
     </html>
     """
 
