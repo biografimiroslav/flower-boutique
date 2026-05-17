@@ -38,7 +38,6 @@ def send_tg_admin(text):
     except Exception as e: 
         print(f"Telegram Error: {e}")
 
-# --- ОБРОБНИКИ ПОМИЛОК JWT ---
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
     return jsonify({"error": f"Invalid token: {error}"}), 422
@@ -51,7 +50,6 @@ def missing_token_callback(error):
 def expired_token_callback(jwt_header, jwt_payload):
     return jsonify({"error": "Expired token"}), 401
 
-# --- БД І ПОШТА ---
 def get_db():
     conn = sqlite3.connect('/home/admin_flower/flower-boutique/src/products.db')
     conn.row_factory = sqlite3.Row
@@ -80,7 +78,6 @@ def handle_preflight():
         res.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
         return res, 200
 
-# --- АВТОРИЗАЦІЯ ---
 @app.route('/api/send-code', methods=['POST'])
 def send_code():
     data = request.json
@@ -146,7 +143,6 @@ def login():
         return jsonify({"success": True, "token": token, "user": user_data})
     return jsonify({"error": "Дані невірні"}), 401
 
-# --- КОРИСТУВАЧ І УЛЮБЛЕНЕ ---
 @app.route('/api/user/orders', methods=['GET'])
 @jwt_required()
 def get_user_orders():
@@ -192,7 +188,6 @@ def toggle_favorite():
     conn.commit(); conn.close()
     return jsonify({"success": True})
 
-# --- ТОВАРИ ТА ЧЕКАУТ ---
 @app.route('/api/products')
 def get_products():
     conn = get_db(); cursor = conn.cursor()
@@ -217,7 +212,6 @@ def checkout():
     
     conn = get_db(); cursor = conn.cursor()
     
-    # Розрахунок реальної вартості на сервері для захисту від підміни цін
     total_sum = 0
     validated_items = []
     names = []
@@ -248,7 +242,6 @@ def checkout():
 
     total_str = str(int(total_sum))
 
-    # Запис всіх даних покупця, адреси, коментаря та суми в БД
     cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, status, date) VALUES (?,?,?,?,?,?,?,?,?)',
                    (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
                     total_sum, 'Ochikuye oplaty', datetime.now().strftime("%Y-%m-%d %H:%M")))
@@ -259,11 +252,9 @@ def checkout():
                        (oid, i['id'], i['name'], i['qty'], i['price']))
     conn.commit(); conn.close()
 
-    # Створення унікального ID для WayForPay, щоб уникнути Duplicate Order ID
     date = str(int(time.time()))
     ref = f"{oid}_{date}"
 
-    # Формування цифрового підпису
     sign_str = ";".join([WFP_MERCHANT, DOMAIN_NAME, ref, date, total_str, "UAH"] + names + counts + prices)
     sign = hmac.new(WFP_SECRET.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
 
@@ -287,7 +278,6 @@ def checkout():
 
 @app.route('/api/payment-callback', methods=['POST'])
 def payment_callback():
-    # Всеїдний парсер для Form-Data та JSON
     data = request.get_json(force=True, silent=True)
     if not data:
         data = request.form.to_dict()
@@ -315,7 +305,6 @@ def payment_callback():
     sign_str = ";".join(sign_fields)
     expected_sign = hmac.new(WFP_SECRET.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
     
-    # На етапі дебагу логуємо незбіг підпису, але не блокуємо виконання
     if wfp_sign != expected_sign:
         send_tg_admin(f"⚠️ <b>Незбіг підпису шлюзу:</b>\nОчікували: {expected_sign}\nОтримали: {wfp_sign}\nПараметри: {sign_str}")
 
@@ -329,21 +318,18 @@ def payment_callback():
         send_tg_admin(f"❌ WFP Callback: Помилка визначення ID замовлення: {ref}")
         return jsonify({"error": "Invalid order reference format"}), 400
     
+    conn = get_db(); cursor = conn.cursor()
+    
     if status.lower() == 'approved':
-        conn = get_db(); cursor = conn.cursor()
-        
-        # Перевірка поточного статусу в БД
         cursor.execute('SELECT status, email, total FROM orders WHERE id = ?', (actual_oid,))
         order = cursor.fetchone()
         
         if order and order['status'] != 'Oplacheno':
-            # Запис статусу успішної оплати в таблицю БД
             cursor.execute('UPDATE orders SET status = "Oplacheno" WHERE id = ?', (actual_oid,))
             cursor.execute('SELECT product_name, qty FROM order_items WHERE order_id = ?', (actual_oid,))
             items = cursor.fetchall()
             conn.commit()
 
-            # Надсилання клієнту чека на email
             if order['email']:
                 items_text = "".join([f"<li>{i['product_name']} x {i['qty']}</li>" for i in items])
                 body = f"""
@@ -355,15 +341,16 @@ def payment_callback():
                 """
                 send_email(order['email'], f"Замовлення №{actual_oid} оплачено", body)
                 
-            # Повідомлення в телеграм бот для адміністратора
             msg = f"💰 <b>НОВА ОПЛАТА НА САЙТІ!</b>\nЗамовлення: #{actual_oid}\nСума: {order['total']} грн\nКлієнт: {order['email']}"
             send_tg_admin(msg)
-            
-        conn.close()
     else:
-        send_tg_admin(f"ℹ️ Отримано статус платежу: {status} для замовлення #{actual_oid}")
+        # ЗАПИСУЄМО БУДЬ-ЯКИЙ ІНШИЙ СТАТУС В БД (Declined, Відхилено і тд)
+        cursor.execute('UPDATE orders SET status = ? WHERE id = ?', (status, actual_oid))
+        conn.commit()
+        send_tg_admin(f"ℹ️ Оплата відхилена. Замовлення: #{actual_oid}, Статус: {status}")
 
-    # Обов'язкова валідна відповідь для WayForPay
+    conn.close()
+
     resp_time = int(time.time())
     resp_sign_str = f"{ref};accept;{resp_time}"
     resp_sign = hmac.new(WFP_SECRET.encode('utf-8'), resp_sign_str.encode('utf-8'), 'md5').hexdigest()
@@ -375,7 +362,6 @@ def payment_callback():
         "signature": resp_sign
     })
 
-# --- ЕНДПОІНТ ДЛЯ СТОРІНКИ ПЕРЕВІРКИ СТАТУСУ ---
 @app.route('/api/orders/status/<string:oid>', methods=['GET'])
 def get_order_status(oid):
     try:
@@ -397,7 +383,6 @@ def get_order_status(oid):
 def payment_redirect():
     order_ref = request.form.get('orderReference', '')
     if not order_ref: order_ref = request.args.get('orderReference', '')
-    
     actual_oid = order_ref.split('_')[0] if '_' in order_ref else order_ref
     
     return f"""
