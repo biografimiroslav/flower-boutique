@@ -1,6 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { setCartModal, setContactModal, setMobileMenu, setSearchModal } from '../store/cartSlice'; // ІМПОРТУВАЛИ setSearchModal
+import { setCartModal, setContactModal, setMobileMenu, setSearchModal } from '../store/cartSlice';
 import { setAuthModal, setAuthView } from '../store/authSlice';
 import GoogleTranslate from './GoogleTranslate';
 
@@ -47,13 +47,18 @@ export default function Header() {
         <a className="navListItem" href="#" onClick={(e) => { e.preventDefault(); dispatch(setContactModal(true)); }}>Контакти</a>
       </nav>
       <nav className="navList2">
+        
+        {/* ВИПРАВЛЕННЯ 1: Додали сам компонент перекладача (він буде прихованим на фоні) */}
+        <GoogleTranslate />
+
         <ul className="chooseLanguage">
           <li><a className="active" onClick={() => changeLanguage('uk')} style={{ cursor: 'pointer' }}>UA</a></li>
           <li><img src="/img/lineForLanguage.svg" alt="|" /></li>
-          <li><div id="google_translate_element"><a onClick={() => changeLanguage('en')} style={{ cursor: 'pointer' }}>ENG</a></div></li>
+          {/* ВИПРАВЛЕННЯ 2: Прибрали <div id="google_translate_element"> навколо кнопки ENG */}
+          <li><a onClick={() => changeLanguage('en')} style={{ cursor: 'pointer' }}>ENG</a></li>
         </ul>
+        
         <ul className="nav2">
-          {/* ТУТ ДОДАНА ЛОГІКА ДЛЯ ЛУПИ */}
           <a href="#" onClick={(e) => { e.preventDefault(); dispatch(setSearchModal(true)); }}>
             <img className="iconPhone" src="/img/search.svg" alt="Search" />
           </a>
