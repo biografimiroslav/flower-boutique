@@ -148,7 +148,8 @@ def login():
 def get_user_orders():
     uid = get_jwt_identity()
     conn = get_db(); cursor = conn.cursor()
-    cursor.execute('SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC', (uid,))
+    # Вибираємо тільки ті замовлення, які мають статус успішної оплати
+    cursor.execute('SELECT * FROM orders WHERE user_id = ? AND status = "Oplacheno" ORDER BY id DESC', (uid,))
     orders = [dict(row) for row in cursor.fetchall()]
     for o in orders:
         cursor.execute('SELECT * FROM order_items WHERE order_id = ?', (o['id'],))
