@@ -862,44 +862,25 @@ input, textarea {
 
 
 /* --- СТИЛІ ДЛЯ GOOGLE TRANSLATE --- */
-/* Ховаємо верхню панель Google, яка зсовує сайт вниз */
-body {
-    top: 0 !important;
+
+/* Ховаємо сам віджет, але НЕ через display: none, щоб Гугл згенерував <select> */
+#google_translate_element {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
 }
-.skiptranslate iframe {
-    display: none !important;
-}
-/* Ховаємо підказки при наведенні на текст */
+
+/* Ховаємо нав'язливу верхню панель і тултипи (банер Google) */
+.skiptranslate iframe,
+.goog-te-banner-frame,
 #goog-gt-tt {
     display: none !important;
 }
-/* Стилізуємо сам випадаючий список */
-.goog-te-gadget {
-    color: transparent !important; /* Ховаємо текст "Powered by Google" */
-}
-.goog-te-gadget .goog-te-combo {
-    margin: 0;
-    padding: 6px 10px;
-    border-radius: 20px;
-    border: 1px solid #c86b8e; /* Рожевий колір бутика */
-    outline: none;
-    color: #4a4a4a;
-    background-color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    cursor: pointer;
-}
 
-
-
-/* Повністю ховаємо стандартний віджет Google Translate */
-#google_translate_element,
-.goog-te-banner-frame,
-.skiptranslate {
-    display: none !important;
-}
-
-/* Захист від зсуву сторінки вниз */
+/* Захист від зміщення сторінки вниз */
 body {
     top: 0 !important;
 }

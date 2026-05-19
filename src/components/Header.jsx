@@ -13,13 +13,17 @@ export default function Header() {
   const user = useSelector(state => state.auth.user);
 
   const changeLanguage = (langCode) => {
+const changeLanguage = (langCode) => {
     const selectField = document.querySelector('.goog-te-combo');
+    
     if (selectField) {
       selectField.value = langCode;
-      selectField.dispatchEvent(new Event('change'));
+      // Додаємо bubbles: true, щоб браузер точно зареєстрував зміну
+      selectField.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-      console.log('Google Translate ще не завантажився');
+      console.warn('Google Translate ще вантажиться, спробуйте через секунду');
     }
+  };
   };
 
   const handleUserClick = (e) => {
