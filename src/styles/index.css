@@ -889,3 +889,17 @@ body {
     font-size: 14px;
     cursor: pointer;
 }
+
+
+
+/* Повністю ховаємо стандартний віджет Google Translate */
+#google_translate_element,
+.goog-te-banner-frame,
+.skiptranslate {
+    display: none !important;
+}
+
+/* Захист від зсуву сторінки вниз */
+body {
+    top: 0 !important;
+}

@@ -2,6 +2,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCartModal, setContactModal, setMobileMenu, setSearchModal } from '../store/cartSlice'; // ІМПОРТУВАЛИ setSearchModal
 import { setAuthModal, setAuthView } from '../store/authSlice';
+import GoogleTranslate from './GoogleTranslate';
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -10,6 +11,16 @@ export default function Header() {
   const cartItems = useSelector(state => state.cart.items);
   const totalItems = cartItems.reduce((sum, item) => sum + item.qty, 0);
   const user = useSelector(state => state.auth.user);
+
+  const changeLanguage = (langCode) => {
+    const selectField = document.querySelector('.goog-te-combo');
+    if (selectField) {
+      selectField.value = langCode;
+      selectField.dispatchEvent(new Event('change'));
+    } else {
+      console.log('Google Translate ще не завантажився');
+    }
+  };
 
   const handleUserClick = (e) => {
     e.preventDefault();
@@ -37,9 +48,9 @@ export default function Header() {
       </nav>
       <nav className="navList2">
         <ul className="chooseLanguage">
-          <li><a className="active" href="#">UA</a></li>
+          <li><a className="active" onClick={() => changeLanguage('uk')} style={{ cursor: 'pointer' }}>UA</a></li>
           <li><img src="/img/lineForLanguage.svg" alt="|" /></li>
-          <li><div id="google_translate_element"><a href="#">ENG</a></div></li>
+          <li><div id="google_translate_element"><a onClick={() => changeLanguage('en')} style={{ cursor: 'pointer' }}>ENG</a></div></li>
         </ul>
         <ul className="nav2">
           {/* ТУТ ДОДАНА ЛОГІКА ДЛЯ ЛУПИ */}
