@@ -39,7 +39,7 @@ export default function Header() {
         <ul className="chooseLanguage">
           <li><a className="active" href="#">UA</a></li>
           <li><img src="/img/lineForLanguage.svg" alt="|" /></li>
-          <li><a href="#">ENG</a></li>
+          <li><div id="google_translate_element"><a href="#">ENG</a></div></li>
         </ul>
         <ul className="nav2">
           {/* ТУТ ДОДАНА ЛОГІКА ДЛЯ ЛУПИ */}

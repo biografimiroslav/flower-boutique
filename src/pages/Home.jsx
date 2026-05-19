@@ -87,7 +87,10 @@ export default function Home() {
       <section id="About" className="about fade-in-up">
         <h2 className="aboutTex">ПРО НАС</h2>
         <div className="aboutThing">
-          <p className="aboutP"><span className="activeAbout">Flower Boutique</span> — це не просто квіткова крамниця, це простір, де народжується краса...</p>
+          <p className="aboutP"><span className="activeAbout">Flower Boutique</span> — це не просто квіткова крамниця, це простір, де народжується краса. 
+    Ми створюємо унікальні квіткові композиції, що дарують емоції та зберігають найцінніші моменти. 
+    Наша команда флористів вкладає душу в кожен букет, використовуючи лише найсвіжіші квіти, 
+    щоб перетворити ваші почуття на справжнє мистецтво.</p>
           <div className="aboutImageWrapper"><img src="/img/about.png" alt="Про нас" /></div>
         </div>
       </section>

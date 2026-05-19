@@ -858,3 +858,34 @@ input, textarea {
   .legalWrapper { padding: 40px 15px 40px; }
   .legalTitle { font-size: 24px; margin-bottom: 20px; }
 }
+
+
+
+/* --- СТИЛІ ДЛЯ GOOGLE TRANSLATE --- */
+/* Ховаємо верхню панель Google, яка зсовує сайт вниз */
+body {
+    top: 0 !important;
+}
+.skiptranslate iframe {
+    display: none !important;
+}
+/* Ховаємо підказки при наведенні на текст */
+#goog-gt-tt {
+    display: none !important;
+}
+/* Стилізуємо сам випадаючий список */
+.goog-te-gadget {
+    color: transparent !important; /* Ховаємо текст "Powered by Google" */
+}
+.goog-te-gadget .goog-te-combo {
+    margin: 0;
+    padding: 6px 10px;
+    border-radius: 20px;
+    border: 1px solid #c86b8e; /* Рожевий колір бутика */
+    outline: none;
+    color: #4a4a4a;
+    background-color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+}

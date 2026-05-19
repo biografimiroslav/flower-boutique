@@ -213,7 +213,13 @@ def checkout():
     
     conn = get_db(); cursor = conn.cursor()
     
-    total_sum = 0
+    delivery_method = cust.get('deliveryMethod', 'delivery')
+    payment_method = cust.get('paymentMethod', 'online')
+    
+    # Визначаємо ціну доставки
+    delivery_cost = 200 if delivery_method == 'delivery' else 0
+    total_sum = delivery_cost
+    
     validated_items = []
     names = []
     counts = []
@@ -241,21 +247,59 @@ def checkout():
         conn.close()
         return jsonify({"error": "Кошик порожній або товари не знайдені"}), 400
 
-    total_str = str(int(total_sum))
+    # Формування гарної адреси та деталей для БД/Телеграму
+    if delivery_method == 'delivery':
+        full_address = f"Доставка: {cust.get('address')}"
+        rec_name = cust.get('receiverName') or "Сам замовник"
+        rec_phone = cust.get('receiverPhone') or "Свій телефон"
+        delivery_info = f"Отримувач: {rec_name} ({rec_phone}). Коли: {cust.get('deliveryDate')} о {cust.get('deliveryTime')}."
+    else:
+        full_address = f"Самовивіз: {cust.get('pickupPoint')}"
+        delivery_info = "Самовивіз."
+
+    payment_tag = "[ПІСЛЯПЛАТА]" if payment_method == 'postpaid' else "[ОНЛАЙН]"
+    full_comment = f"{payment_tag} {delivery_info} Комент: {cust.get('comment', '')}"
+
+    status = 'Замовлення прийнято (Післяплата)' if payment_method == 'postpaid' else 'Ochikuye oplaty'
 
     cursor.execute('INSERT INTO orders (user_id, name, phone, email, address, comment, total, status, date) VALUES (?,?,?,?,?,?,?,?,?)',
-                   (uid, cust['name'], cust['phone'], cust.get('email'), cust['address'], cust.get('comment'), 
-                    total_sum, 'Ochikuye oplaty', datetime.now().strftime("%Y-%m-%d %H:%M")))
+                   (uid, cust['name'], cust['phone'], cust.get('email'), full_address, full_comment, 
+                    total_sum, status, datetime.now().strftime("%Y-%m-%d %H:%M")))
     oid = cursor.lastrowid
     
     for i in validated_items: 
         cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', 
                        (oid, i['id'], i['name'], i['qty'], i['price']))
+                       
+    # Якщо є доставка, додаємо її як окремий "товар", щоб зійшлася математика у профілі та у WFP
+    if delivery_cost > 0:
+        cursor.execute('INSERT INTO order_items (order_id, product_id, product_name, qty, price) VALUES (?,?,?,?,?)', 
+                       (oid, 0, "Доставка кур'єром", 1, delivery_cost))
+        names.append("Доставка кур'єром")
+        counts.append("1")
+        prices.append(str(delivery_cost))
+
     conn.commit(); conn.close()
 
     date = str(int(time.time()))
     ref = f"{oid}_{date}"
 
+    # Якщо післяплата — відправляємо повідомлення в ТГ одразу і кидаємо на сторінку успіху
+    if payment_method == 'postpaid':
+        items_text = "".join([f"<li>{i['name']} x {i['qty']}</li>" for i in validated_items])
+        if delivery_cost > 0: items_text += "<li>Доставка кур'єром x 1</li>"
+        
+        if cust.get('email'):
+            body = f"<h2>Дякуємо за замовлення №{oid}! 🌸</h2><p>Ми отримали ваше замовлення (Оплата при отриманні).</p><ul>{items_text}</ul><p><b>Сума до оплати: {total_sum} грн</b></p>"
+            send_email(cust.get('email'), f"Замовлення №{oid} прийнято", body)
+            
+        msg = f"📦 <b>НОВЕ ЗАМОВЛЕННЯ (ПІСЛЯПЛАТА)!</b>\nЗамовлення: #{oid}\nСума: {total_sum} грн\nКлієнт: {cust['name']} ({cust['phone']})\nАдреса: {full_address}\nДеталі: {full_comment}"
+        send_tg_admin(msg)
+        
+        return jsonify({"success": True, "postpaid": True, "orderReference": ref})
+
+    # Якщо онлайн — формуємо підпис для WayForPay
+    total_str = str(int(total_sum))
     sign_str = ";".join([WFP_MERCHANT, DOMAIN_NAME, ref, date, total_str, "UAH"] + names + counts + prices)
     sign = hmac.new(WFP_SECRET.encode('utf-8'), sign_str.encode('utf-8'), 'md5').hexdigest()
 

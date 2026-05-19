@@ -25,7 +25,7 @@ export default function PaymentStatus() {
         if (res.data.success) {
           const currentStatus = res.data.status.toLowerCase();
           
-          if (currentStatus === 'oplacheno' || currentStatus === 'approved') {
+            if (currentStatus === 'oplacheno' || currentStatus === 'approved' || currentStatus === 'замовлення прийнято (післяплата)') {
             setOrderInfo(res.data);
             setStatus('success');
           } 
