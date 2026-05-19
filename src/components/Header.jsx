@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setCartModal, setContactModal, setMobileMenu, setSearchModal } from '../store/cartSlice';
 import { setAuthModal, setAuthView } from '../store/authSlice';
 import GoogleTranslate from './GoogleTranslate';
+import { useState, useEffect } from 'react'; // Додали імпорт хуків React
 
 export default function Header() {
   const dispatch = useDispatch();
@@ -12,18 +13,28 @@ export default function Header() {
   const totalItems = cartItems.reduce((sum, item) => sum + item.qty, 0);
   const user = useSelector(state => state.auth.user);
 
+  // Додаємо стан для відстеження активної мови (за замовчуванням 'uk')
+  const [currentLang, setCurrentLang] = useState('uk');
+
+  // Перевіряємо кукі при завантаженні, щоб знати, чи була вже обрана англійська
+  useEffect(() => {
+    const match = document.cookie.match(/googtrans=\/[^/]+\/([^;]+)/);
+    if (match && match[1] === 'en') {
+      setCurrentLang('en');
+    }
+  }, []);
+
   const changeLanguage = (langCode) => {
-const changeLanguage = (langCode) => {
-    const selectField = document.querySelector('.goog-te-combo');
+    setCurrentLang(langCode); // Перекидаємо рожевий колір на натиснуту кнопку
     
+    const selectField = document.querySelector('.goog-te-combo');
     if (selectField) {
       selectField.value = langCode;
-      // Додаємо bubbles: true, щоб браузер точно зареєстрував зміну
       selectField.dispatchEvent(new Event('change', { bubbles: true }));
     } else {
-      console.warn('Google Translate ще вантажиться, спробуйте через секунду');
+      document.cookie = `googtrans=/uk/${langCode}; path=/`;
+      window.location.reload();
     }
-  };
   };
 
   const handleUserClick = (e) => {
@@ -52,14 +63,29 @@ const changeLanguage = (langCode) => {
       </nav>
       <nav className="navList2">
         
-        {/* ВИПРАВЛЕННЯ 1: Додали сам компонент перекладача (він буде прихованим на фоні) */}
         <GoogleTranslate />
 
-        <ul className="chooseLanguage">
-          <li><a className="active" onClick={() => changeLanguage('uk')} style={{ cursor: 'pointer' }}>UA</a></li>
+        {/* Додали клас "notranslate", щоб Гугл не перекладав букви UA та ENG */}
+        <ul className="chooseLanguage notranslate">
+          <li>
+            <a 
+              className={currentLang === 'uk' ? 'active' : ''} 
+              onClick={() => changeLanguage('uk')} 
+              style={{ cursor: 'pointer' }}
+            >
+              UA
+            </a>
+          </li>
           <li><img src="/img/lineForLanguage.svg" alt="|" /></li>
-          {/* ВИПРАВЛЕННЯ 2: Прибрали <div id="google_translate_element"> навколо кнопки ENG */}
-          <li><a onClick={() => changeLanguage('en')} style={{ cursor: 'pointer' }}>ENG</a></li>
+          <li>
+            <a 
+              className={currentLang === 'en' ? 'active' : ''} 
+              onClick={() => changeLanguage('en')} 
+              style={{ cursor: 'pointer' }}
+            >
+              ENG
+            </a>
+          </li>
         </ul>
         
         <ul className="nav2">

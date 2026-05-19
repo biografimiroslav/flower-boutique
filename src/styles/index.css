@@ -884,3 +884,28 @@ input, textarea {
 body {
     top: 0 !important;
 }
+
+
+/* --- СТИЛІ ДЛЯ GOOGLE TRANSLATE --- */
+
+/* Робимо віджет невидимим, але ЗАЛИШАЄМО в DOM, щоб скрипт Гугла працював */
+#google_translate_element {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Повністю ховаємо жахливу верхню панель і тултипи при наведенні */
+.skiptranslate iframe,
+.goog-te-banner-frame,
+#goog-gt-tt {
+    display: none !important;
+}
+
+/* Захищаємо сторінку від зсуву вниз */
+body {
+    top: 0 !important;
+}
